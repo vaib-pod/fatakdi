@@ -24,6 +24,7 @@ Run `npm test` for server integration tests covering rooms, events, simultaneous
 
 ## Controls
 
+- **Jump / J** — a joyful hop while the fuse is burning or the firework show is running. Tap **Jump** on phones or click it on a laptop; press **J** as a keyboard shortcut. Jumping also works while walking or holding Fuljhadi, and is shared with party members. Your position on the ground still determines the retreat distance.
 - On a phone, tap **Play fullscreen** and turn it sideways. The browser enters fullscreen and locks landscape when supported; otherwise the page fills the available viewport and shows a rotation prompt. **Options** opens the existing cracker, character, face and party controls in a drawer; **Done** returns to play and **Exit** restores the page.
 - Slide and hold anywhere on the game canvas to move in that direction. Drag farther for full speed, move diagonally, and release to stop. This also works on the normal touch canvas. The light and arm rotation buttons stay available beside the play area.
 - **W / ↑** — walk forward (toward the cracker)

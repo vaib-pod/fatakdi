@@ -142,6 +142,7 @@
   }
   window.Party={
     get active(){return !!session;},get connected(){return connected;},
+    get burningCrackers(){return session?[...players.values()].filter(player=>player.id!==session.id).map(player=>({state:player.state,target:player.target})):[];},
     get needsSkyView(){
       if(!session)return false;
       const airborne=state=>state.phase==='show'&&['skyshot','double','rocket','lantern'].includes(state.kind);

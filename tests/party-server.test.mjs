@@ -36,9 +36,9 @@ test('rooms synchronize people, movements, concurrent shows, late joins and host
   assert.notDeepEqual(guest.player.target,host.player.target);
   assert.equal((await hostEvents.next('joined')).player.name,'Ravi');
   const guestEvents=await stream(guest.token);assert.equal((await guestEvents.next('room')).players.length,2);
-  const state={kind:'fuljhadi',phase:'show',player:{x:400,y:500},fuljhadiColor:'purple',character:'female'};
+  const state={kind:'fuljhadi',phase:'show',player:{x:400,y:500},fuljhadiColor:'purple',character:'female',jumpTime:.55,jumping:true};
   await post('update',{state},guest.token);
-  const move=await hostEvents.next('move');assert.equal(move.state.player.x,400);assert.equal(move.state.character,'female');
+  const move=await hostEvents.next('move');assert.equal(move.state.player.x,400);assert.equal(move.state.character,'female');assert.equal(move.state.jumpTime,.55);assert.equal(move.state.jumping,true);
   await Promise.all([post('show',{state},guest.token),post('show',{state:{...state,kind:'skyshot',skyshotCount:12}},host.token)]);
   const effects=[await hostEvents.next('show'),await hostEvents.next('show')];assert.equal(new Set(effects.map(e=>e.playerId)).size,2);
   const late=await post('join',{name:'Meera',code:host.code});const lateEvents=await stream(late.token);

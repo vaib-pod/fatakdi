@@ -21,6 +21,8 @@ function cleanState(input={}){
     mirchiCount:pick(input.mirchiCount,[10,50,100],10),singleColor:pick(input.singleColor,colors,'golden'),
     fuljhadiColor:pick(input.fuljhadiColor,colors,'golden'),facingBack:input.facingBack===true,
     armRotating:input.armRotating===true,armAngle:finite(input.armAngle,-1e6,1e6),
+    jumpTime:['fuse','show'].includes(input.phase)?finite(input.jumpTime,0,.7):0,
+    jumping:['fuse','show'].includes(input.phase)&&input.jumping===true,
     clock:finite(input.clock,0,40),walk:finite(input.walk,0,1e9),fuse:finite(input.fuse,0,4.3)};
 }
 function cleanFace(face){

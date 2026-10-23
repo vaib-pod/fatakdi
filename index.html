@@ -74,6 +74,11 @@
     .color-choice:focus-visible { outline:2px solid var(--mint); outline-offset:3px; }
     .rotate-button { border:1px solid #f5d293; border-radius:50px; padding:10px 18px; color:#fff0cc; background:#26334feb; font-size:12px; font-weight:800; }
     .rotate-button[aria-pressed="true"] { background:#59432c; }
+    .celebration-controls { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+    .jump-button { min-height:44px; padding:10px 18px; border:1px solid #a4e6cf; border-radius:50px; background:#193b3bea; color:#e4fff0; font-size:13px; font-weight:850; touch-action:manipulation; }
+    .jump-button:hover:not(:disabled) { background:#28534c; }
+    .jump-button:disabled { opacity:.6; cursor:default; }
+    .jump-button:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
     .sound-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
     .sound-toggle { border:1px solid #65765f; border-radius:9px; background:#2d4138; color:#d8ffe2; padding:8px 12px; font-size:12px; font-weight:750; }
     .sound-toggle[aria-pressed="false"] { border-color:#485475; background:#242d46; color:#c2cae0; }
@@ -241,7 +246,10 @@
           <div class="action-zone">
             <div id="toast" class="stage-toast" aria-live="polite">You've reached the cracker!</div>
             <button class="light-button" id="light-button" type="button">✦ Light it!</button>
-            <button class="rotate-button" id="rotate-button" type="button" aria-pressed="false" hidden>↻ Draw circles</button>
+            <div class="celebration-controls">
+              <button class="rotate-button" id="rotate-button" type="button" aria-pressed="false" hidden>↻ Draw circles</button>
+              <button class="jump-button" id="jump-button" type="button" aria-keyshortcuts="J" title="Start or stop jumping (J)" aria-pressed="false" hidden>↑ Jump</button>
+            </div>
           </div>
           <div class="touch-pad" aria-label="Movement controls">
             <button class="pad up" data-dir="up" aria-label="Move forward">↑</button>
@@ -250,7 +258,7 @@
             <button class="pad right" data-dir="right" aria-label="Move right">→</button>
           </div>
         </div>
-        <div class="stage-footer"><span class="desktop-help">Move with <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> &nbsp; · &nbsp; <kbd>Space</kbd> to light</span><span class="footer-note">A playful simulation, not real-world instructions.</span></div>
+        <div class="stage-footer"><span class="desktop-help">Move with <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> &nbsp; · &nbsp; <kbd>Space</kbd> to light &nbsp; &middot; &nbsp; <kbd>J</kbd> to jump</span><span class="footer-note">A playful simulation, not real-world instructions.</span></div>
       </main>
       <button class="phone-backdrop" id="phone-backdrop" type="button" aria-label="Close game options" tabindex="-1"></button>
       <aside class="sidebar" id="game-options" aria-label="Game options">
@@ -395,9 +403,10 @@
     const warningTitle=$('warning-title'), warningSub=$('warning-sub');
     const timerFill=$('timer-fill'), lightButton=$('light-button'), toast=$('toast');
     const rotateButton=$('rotate-button');
+    const jumpButton=$('jump-button'),jumpDuration=.7;
     const scoreEl=$('score');
     const stage=$('stage'),swipeStick=$('swipe-stick'),phoneOptions=$('game-options');
-    const W=1000,H=620, range=112, safeRadius=202;
+    const W=1000,H=620, range=112, safeRadius=62;
     let target={x:500,y:292},partyActor=null;
     const FaceAvatar={
       get isOpen(){return window.FaceAvatar.isOpen;},
@@ -472,7 +481,7 @@
     const wideCourtyardLayer=document.createElement('canvas');
     wideCourtyardLayer.width=W*3;wideCourtyardLayer.height=H+240;
     let smoke=[],shockwaves=[];
-    let state={phase:'idle',kind:'skyshot',skyshotCount:1,mirchiCount:10,singleColor:'golden',fuljhadiColor:'golden',armAngle:-.6,armRotating:false,focus:0,facingBack:false,character:'male',player:{x:500,y:536},score:0,clock:0,fuse:4.3,cam:0,walk:0,burst1:false,launchSound:false,ignitionLit:false,spin:0,retreated:false,now:0,flash:0,emission:0,smokeEmission:0,pops:0};
+    let state={phase:'idle',kind:'skyshot',skyshotCount:1,mirchiCount:10,singleColor:'golden',fuljhadiColor:'golden',armAngle:-.6,armRotating:false,focus:0,facingBack:false,character:'male',player:{x:500,y:536},score:0,clock:0,fuse:4.3,cam:0,walk:0,jumpTime:0,jumping:false,burst1:false,launchSound:false,ignitionLit:false,spin:0,retreated:false,now:0,flash:0,emission:0,smokeEmission:0,pops:0};
     let audioCtx=null,audioMaster=null,noiseBuffer=null,audioLoop=null;
     let soundEnabled=true,soundVolume=.6,audioFocused=true,nextCrackle=0,audioSeed=78193;
     const audioVoices=new Set();
@@ -731,13 +740,40 @@
     const rand=(a,b)=>a+Math.random()*(b-a);
     const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
     const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
-    const canMove=()=> !(phonePlay&&(phoneOptionsOpen||phonePortrait.matches))&&(!Party.active||Party.connected)&&(state.phase==='idle'||state.phase==='fuse'||(state.phase==='show'&&(state.kind==='lantern'||state.kind==='fuljhadi')));
+    const canMove=()=> !(phonePlay&&(phoneOptionsOpen||phonePortrait.matches))&&(!Party.active||Party.connected)&&['idle','fuse','show'].includes(state.phase);
+    function burningZone(selection,spot){
+      if(!['fuse','show'].includes(selection.phase)||['fuljhadi','lantern'].includes(selection.kind))return null;
+      const count=selection.mirchiCount||10;
+      const start=selection.kind==='mirchi'?(count===10?-48:-count*3)*bombScale:0;
+      const end=selection.kind==='mirchi'?(count===10?46.5:count*3)*bombScale:0;
+      return {left:spot.x+start,right:spot.x+end,y:spot.y};
+    }
+    const zoneDistance=(point,zone)=>Math.hypot(point.x-clamp(point.x,zone.left,zone.right),point.y-zone.y);
+    function movePlayer(dx,dy){
+      const own=burningZone(state,target),zones=own?[own]:[];
+      if(Party.active)for(const other of Party.burningCrackers){const zone=burningZone(other.state,other.target);if(zone)zones.push(zone);}
+      // Small simulation steps and separate axes let the player slide around
+      // a burning prop. Anyone already inside can always walk outward.
+      const allowed=(next,previous)=>zones.every(zone=>{
+        const distance=zoneDistance(next,zone),before=zoneDistance(previous,zone);
+        return distance>=safeRadius||before<safeRadius&&distance>=before;
+      });
+      const previous={...state.player};
+      const nextX={x:clamp(previous.x+dx,65,935),y:previous.y};
+      if(allowed(nextX,state.player))state.player.x=nextX.x;
+      const nextY={x:state.player.x,y:clamp(previous.y+dy,310,565)};
+      if(allowed(nextY,state.player))state.player.y=nextY.y;
+      return Math.hypot(state.player.x-previous.x,state.player.y-previous.y);
+    }
     const showEnvelope=(t,end)=>smooth(t/.25)*(1-smooth((t-end+.45)/.45));
     const isMultiSkyshot=()=>state.kind==='skyshot'&&state.skyshotCount>1;
     const isSingleSkyView=()=>!Party.active&&(state.kind==='double'||(state.kind==='skyshot'&&state.skyshotCount===1));
     const isWideLaunch=()=>isMultiSkyshot()||state.kind==='rocket'||(Party.active&&(state.kind==='skyshot'||state.kind==='double'));
     const walking=()=>partyActor?partyActor.moving:canMove()&&(['up','down','left','right'].some(dir=>keys.has(dir))||Math.hypot(swipe.x,swipe.y)>.08);
-    const playerBounce=()=>walking()?Math.sin(state.walk)*3:0;
+    const jumpLift=()=>{const progress=1-(state.jumpTime||0)/jumpDuration;return 56*4*progress*(1-progress);};
+    const playerBounce=()=>(walking()?Math.sin(state.walk)*3:0)-jumpLift();
+    const canJump=()=>['fuse','show'].includes(state.phase)&&!FaceAvatar.isOpen&&!(phonePlay&&(phoneOptionsOpen||phonePortrait.matches))&&(!Party.active||Party.connected);
+    function jump(){if(canJump()){state.jumping=!state.jumping;if(state.jumping&&!state.jumpTime)state.jumpTime=jumpDuration;}}
     function tint(color,amount){
       return '#'+[1,3,5].map(i=>Math.round(parseInt(color.slice(i,i+2),16)*(1-amount)+255*amount).toString(16).padStart(2,'0')).join('');
     }
@@ -759,6 +795,7 @@
     }
     function setToast(txt,shown){if(toast.textContent!==txt)toast.textContent=txt;toast.classList.toggle('visible',shown);}
     function reset(full=false,preservePlayer=false){
+      state.jumpTime=0;state.jumping=false;
       if(partyActor){partyActor.effectActive=false;state.phase='idle';state.clock=0;particles.length=0;smoke.length=0;shockwaves.length=0;skyshots.length=0;fuljhadiTrace.length=0;return;}
       stopAllAudio();
       state.phase='idle';state.clock=0;state.cam=0;if(!preservePlayer)state.walk=0;
@@ -820,6 +857,7 @@
       unlockAudio();
     }
     lightButton.addEventListener('click',light);
+    jumpButton.addEventListener('click',jump);
     document.addEventListener('keydown',e=>{
       if(e.key==='Escape'&&phoneOptionsOpen){setPhoneOptions(false);return;}
       if(phoneOptionsOpen)return;
@@ -828,6 +866,7 @@
       if(dir){e.preventDefault();keys.add(dir);}
       if(e.code==='Space'){e.preventDefault();if(!e.repeat)light();}
       if(e.key.toLowerCase()==='r'&&state.kind==='fuljhadi'){e.preventDefault();if(!e.repeat)toggleCircles();}
+      if(e.key.toLowerCase()==='j'){e.preventDefault();if(!e.repeat)jump();}
     });
     document.addEventListener('keyup',e=>{
       if(e.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;
@@ -1035,6 +1074,9 @@
       const selectedColor=handheld?state.fuljhadiColor:state.singleColor;
       colorButtons.forEach(b=>{b.disabled=state.phase!=='idle';b.setAttribute('aria-pressed',String(b.dataset.color===selectedColor));});
       rotateButton.hidden=!handheld;rotateButton.setAttribute('aria-pressed',String(state.armRotating));
+      jumpButton.hidden=!['fuse','show'].includes(state.phase);
+      jumpButton.disabled=!canJump();jumpButton.setAttribute('aria-pressed',String(!!state.jumping));
+      const jumpText=state.jumping?'■ Stop jumping':'↑ Jump';if(jumpButton.textContent!==jumpText)jumpButton.textContent=jumpText;
       const rotateText=state.armRotating?'■ Stop circles':'↻ Draw circles';if(rotateButton.textContent!==rotateText)rotateButton.textContent=rotateText;
       distanceEl.parentElement.hidden=handheld;
       shotButtons.forEach(b=>{b.disabled=state.phase!=='idle';b.setAttribute('aria-pressed',String(Number(b.dataset.shots)===state.skyshotCount));});
@@ -1049,10 +1091,13 @@
       if(state.phase==='fuse'){
         warning.classList.add('show');timerFill.style.width=(100*state.fuse/fuseDuration())+'%';
         warningTitle.textContent=safe>=safeRadius?'✓ Safe distance reached!':'⚠ Fuse lit — move back!';
-        warningSub.textContent=safe>=safeRadius?'Stay here until the countdown ends.':'Retreat outside the glowing ring · '+Math.ceil(state.fuse)+'s';
+        warningSub.textContent=safe>=safeRadius?'Walk around freely outside the small ring.':'Step outside the small ring · '+Math.ceil(state.fuse)+'s';
       }
     }
     function update(dt){
+      if(!['fuse','show'].includes(state.phase))state.jumping=false;
+      const jumpRemaining=(state.jumpTime||0)-dt;
+      state.jumpTime=state.jumping&&jumpRemaining<=0?jumpDuration+jumpRemaining%jumpDuration:Math.max(0,jumpRemaining);
       const effectDt=dt*(state.kind==='double'&&state.phase==='show'?doublePlaybackRate:1);
       state.now+=dt;state.flash=Math.max(0,state.flash-effectDt*2.1);
       if(state.kind==='fuljhadi'){
@@ -1064,8 +1109,8 @@
         let dx=(keys.has('right')?1:0)-(keys.has('left')?1:0)+swipe.x;
         let dy=(keys.has('down')?1:0)-(keys.has('up')?1:0)+swipe.y;
         const mag=Math.hypot(dx,dy);
-        if(mag){const speed=Math.min(1,mag);if(dy)state.facingBack=dy<0;dx/=mag;dy/=mag;state.player.x=clamp(state.player.x+dx*255*dt*speed,65,935);
-          state.player.y=clamp(state.player.y+dy*255*dt*speed,310,565);state.walk+=dt*13*speed;}
+        if(mag){const speed=Math.min(1,mag);if(dy)state.facingBack=dy<0;dx/=mag;dy/=mag;
+          state.walk+=movePlayer(dx*255*dt*speed,dy*255*dt*speed)/255*13;}
       }
       if(partyActor&&state.phase!=='show'){
         state.clock+=dt;state.ignitionLit=state.phase==='lighting'&&state.clock>=ignitionContact;
@@ -1167,7 +1212,7 @@
           }
         }
         const duration=state.kind==='double'?Math.max(doubleRecording.duration,doubleRecording.secondAt+4.2):isWideLaunch()?(state.kind==='rocket'?Math.max(skyshots[0].burstAt+2.1,rocketRecording.duration-rocketRecording.startAt):skyshots[skyshots.length-1].burstAt+4):state.kind==='kitkat'?kitkatRecording.burnDuration+1.8:state.kind==='peacock'?peacockRecording.burnDuration+2:state.kind==='fuljhadi'?fuljhadiRecording.burnDuration+1.5:state.kind==='lantern'?8.8:state.kind==='skyshot'?skyshots[0].burstAt+4:state.kind==='fountain'?5.8:state.kind==='aloo'?3.2:state.kind==='mirchi'?mirchiAudioEnd()-mirchiRecording.startAt+1.5:5;
-        if(t>duration&&(state.kind!=='skyshot'||skyshots.every(shot=>shot.clock>shot.burstAt+4)))reset(false,state.kind==='lantern'||state.kind==='fuljhadi');
+        if(t>duration&&(state.kind!=='skyshot'||skyshots.every(shot=>shot.clock>shot.burstAt+4)))reset(false,true);
       }
       while(fuljhadiTrace.length&&state.now-fuljhadiTrace[0].time>1.5)fuljhadiTrace.shift();
       const drag=Math.exp(-particleDrag*effectDt),travel=(1-drag)/particleDrag;
@@ -1453,14 +1498,17 @@
         ctx.strokeStyle='#ffdca986';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(point.x,y+6,43+b,19+b/2,0,0,2*Math.PI);ctx.stroke();
         ctx.fillStyle='#ffe4c4';ctx.font='700 12px system-ui';ctx.textAlign='center';ctx.fillText(isMultiSkyshot()?state.skyshotCount+'-shot Skyshot':state.kind==='mirchi'?state.mirchiCount+'-cracker Mirchi':names[state.kind],x,y-(state.kind==='rocket'?119:state.kind==='lantern'?98:68));
       }
-      if(state.phase==='fuse'){
+      if(burningZone(state,target)){
         ctx.save();ctx.setLineDash([9,9]);ctx.lineDashOffset=-state.now*35;
-        const safe=safetyDistance()>=safeRadius,half=state.kind==='mirchi'?mirchiLayout().endX*bombScale:0;
-        ctx.strokeStyle=safe?'#a6f7c8':'#ff9277';ctx.lineWidth=3.5;
-        ctx.beginPath();if(half)ctx.roundRect(x-half-safeRadius,y-safeRadius,(half+safeRadius)*2,safeRadius*2,safeRadius);else ctx.arc(x,y,safeRadius,0,2*Math.PI);ctx.stroke();
-        ctx.setLineDash([]);ctx.fillStyle=safe?'#a6f7c8':'#ffd7bd';
-        ctx.font='700 12px system-ui';ctx.textAlign='center';ctx.fillText('SAFE ZONE OUTSIDE THE CIRCLE',x,y+safeRadius+17);ctx.restore();
+        const zone=burningZone(state,target);
+        ctx.strokeStyle='#ffb28b99';ctx.fillStyle='#ff92770a';ctx.lineWidth=2;
+        ctx.beginPath();if(zone.left!==zone.right)ctx.roundRect(zone.left-safeRadius,y-safeRadius,zone.right-zone.left+safeRadius*2,safeRadius*2,safeRadius);else ctx.arc(x,y,safeRadius,0,2*Math.PI);ctx.fill();ctx.stroke();ctx.restore();
       }
+    }
+    function drawPlayerShadow(){
+      const lift=jumpLift()/56,scale=1-lift*.25;
+      ctx.save();ctx.globalAlpha=1-lift*.4;ctx.fillStyle='#0508187a';ctx.beginPath();
+      ctx.ellipse(state.player.x,state.player.y+2,(state.character==='female'?29:23)*scale,8*scale,0,0,Math.PI*2);ctx.fill();ctx.restore();
     }
     function drawPlayer(){
       if(state.facingBack){drawRearPlayer();return;}
@@ -1469,7 +1517,7 @@
       const holding=state.kind==='fuljhadi';
       const walkingNow=walking();
       const bounce=playerBounce();
-      ctx.fillStyle='#0508187a';ctx.beginPath();ctx.ellipse(x,y+2,female?29:23,8,0,0,2*Math.PI);ctx.fill();
+      drawPlayerShadow();
       ctx.save();ctx.translate(x,y+bounce);
       // Cream pajama trousers or ankles beneath the ghagra, with festive juttis.
       const stride=walkingNow?Math.sin(state.walk)*(female?5:8):0;
@@ -1567,8 +1615,8 @@
       const {x,y}=state.player,female=state.character==='female',holding=state.kind==='fuljhadi';
       const lighting=state.phase==='lighting',pose=ignitionPose(),bend=pose.bend;
       const bounce=playerBounce(),walkingNow=walking(),stride=walkingNow?Math.sin(state.walk)*(female?5:8):0;
+      drawPlayerShadow();
       ctx.save();ctx.translate(x,y+bounce);ctx.lineCap='round';ctx.lineJoin='round';
-      ctx.fillStyle='#0508187a';ctx.beginPath();ctx.ellipse(0,2,female?29:23,8,0,0,Math.PI*2);ctx.fill();
       // Feet stay on the paving; the torso foreshortens as it bows away from the camera.
       line(-9,-26,-10-stride,0,female?'#e6ae87':'#fff2d4',female?6:10);
       line(9,-26,10+stride,0,female?'#e6ae87':'#fff2d4',female?6:10);
