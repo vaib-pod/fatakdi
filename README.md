@@ -16,6 +16,12 @@ For solo play, VS Code's Live Server extension or `python -m http.server 8000 --
 4. Face capture still happens on the user's device. After applying a face, enable **Share my face with this room** to show it to other players. Only the small transparent head cutout is sent, not the original camera frame. Leaving sharing unchecked uses the default face for other players. Uncheck it or remove your photo to remove the shared cutout.
 5. **Leave party** returns to solo play. If the host leaves, another member becomes the host. A temporary connection loss retries automatically; a disconnected member is removed after about 45–55 seconds without updates. Refreshing requires joining again.
 
+Choose **Kurta colour** or **Ghagra choli colour** below the character selector. Pick a swatch or any custom colour; the two outfits remember separate choices. Other room members and late joiners see those colours, including during walking, jumping, lighting and Fuljhadi animations.
+
+Walk to another player's idle ground cracker and use the light button showing their name (or Space). The nearest fuse determines the choice. The lighter bends toward that fuse, then can retreat and keep moving. The server reserves the cracker, starts its normal countdown, and broadcasts the show to the whole room even if its owner is in a background tab. The owner's selection is locked during the shared ignition; two people cannot start it twice. Your own running show stays independent. Fuljhadi remains in its owner's hand.
+
+Long Mirchi chains keep their original lengths and counts, but their ground positions shift inward near the left and right edges. The 100-cracker chain, its fuse, lighting interaction and blocked region use the same placement, so the first and last players' chains remain inside the ground.
+
 Rooms, sessions, active effects and shared cutouts live only in server memory. There are no accounts or saved photos. Empty rooms disappear; restarting the server ends all rooms. Anyone with the room code can join while space is available. Room codes are invitations rather than an account-based access system.
 
 The server streams room events and receives player updates over same-origin HTTP. Face cutouts are sent only when changed, not with movement updates. Remote characters use the same drawing and spark simulation as the local character; fireworks start from shared server timestamps, and late joiners catch up to ongoing shows. Device speed and network delay can cause small timing differences.
@@ -37,6 +43,10 @@ Run `npm test` for server integration tests covering rooms, events, simultaneous
 - **Sound on/off** and **Volume** — control the cracker audio in the sidebar
 
 ## Gameplay
+
+First-time visitors complete a required walkthrough directly in the app. A spotlight highlights the real Male/Female choices, outfit colours, face buttons, cracker picker, party controls, character, and Light it button. Highlighted settings can be tried during the walkthrough; photo capture and joining a party remain optional. Phones start with fullscreen play and automatically open/scroll the Options drawer for each setting. The tooltip stays beside its target on laptops and adapts to phone portrait/landscape layouts. There is no Skip or close button, and Escape cannot dismiss the walkthrough. Gameplay unlocks after **Let's play** on the last step.
+
+Completion saves `firecracker-night.guide-seen=1` only at the end. The stable preference survives browser reloads and game restarts; previously saved completion preferences are preserved. An unfinished walkthrough saves its current step in `firecracker-night.guide-step` and resumes there after reload. A phone may first request fullscreen again, then return to the saved step. localStorage and a persistent cookie keep these preferences per browser/device. Clearing site data, using a different browser/device, or a new private session can show it again. Solo play pauses during the tour; active party sessions continue with local movement blocked and audio muted. `onboarding.js` and `onboarding.css` contain the walkthrough; keep both alongside `index.html` when deploying.
 
 Choose **Male** (kurta pajama) or **Female** (ghagra choli) in the character panel. You can switch at any time; your choice stays selected between rounds and when restarting the game.
 

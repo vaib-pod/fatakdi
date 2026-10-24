@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const $=id=>document.getElementById(id),players=new Map(),seenEffects=new Map(),sounds=new Map();
+  const $=id=>document.getElementById(id),players=new Map(),seenEffects=new Map(),seenIgnitions=new Map(),sounds=new Map();
   let bridge,session=null,source=null,connected=false,busy=false,sending=false,lastSend=0,offset=0,profileTimer;
   let connectionGeneration=0,lastFace=null,sequence=0;
   const status=(message,error=false)=>{$('party-status').textContent=message;$('party-status').dataset.error=String(error);};
@@ -45,11 +45,18 @@
       playing:false,pending:false,failed:false,generation:0}))});
   }
   function receiveEffect(effect){
-    if(effect.playerId===session.id||seenEffects.has(effect.id))return;
+    if(seenEffects.has(effect.id))return;
+    if(effect.playerId===session.id){if(effect.shared){seenEffects.set(effect.id,now());bridge.startSharedShow(effect);}return;}
     const actor=players.get(effect.playerId);if(!actor)return;
     const age=Math.max(0,(now()-effect.at)/1000);
     seenEffects.set(effect.id,now());
     bridge.startEffect(actor,effect,age);stopSounds(effect.playerId);addSound(effect);
+  }
+  function receiveIgnition(info){
+    if(seenIgnitions.has(info.id))return;seenIgnitions.set(info.id,now());
+    const owner=players.get(info.ownerId),igniter=players.get(info.igniterId),age=Math.max(0,(now()-info.at)/1000);
+    if(info.ownerId===session.id)bridge.reserveCracker(info);else if(owner)bridge.reserveActor(owner);
+    if(info.igniterId===session.id)bridge.lightAnother(info,age);else if(igniter)bridge.lightActor(igniter,info,age);
   }
   function listen(generation){
     source=new EventSource('/api/party/events?session='+encodeURIComponent(session.token));
@@ -63,7 +70,7 @@
       for(const id of players.keys())if(!live.has(id)){players.delete(id);stopSounds(id);}
       room.players.forEach(upsert);connected=true;roster();
       status('You’re in! Choose a cracker and light it together.');
-      room.effects.forEach(receiveEffect);publishFace();
+      (room.ignitions||[]).forEach(receiveIgnition);room.effects.forEach(receiveEffect);publishFace();
     });
     handle('joined',data=>{session.hostId=data.hostId;upsert(data.player);roster();});
     handle('left',data=>{players.delete(data.id);stopSounds(data.id);session.hostId=data.hostId;roster();});
@@ -73,6 +80,11 @@
     });
     handle('profile',data=>{const player=players.get(data.id);if(player){applyFace(player,data.face);roster();}});
     handle('show',receiveEffect);
+    handle('ignite',receiveIgnition);
+    handle('fuse',info=>{
+      if(info.ownerId===session.id)bridge.startSharedFuse(info,Math.max(0,(now()-info.at)/1000));
+      else {const actor=players.get(info.ownerId);if(actor)bridge.receive(actor,info.state);}
+    });
     source.onerror=()=>{if(generation!==connectionGeneration)return;connected=false;bridge.clearKeys();status('Connection interrupted. Reconnecting to your party…',true);};
   }
   async function enter(action){
@@ -93,7 +105,7 @@
   function exit(message='You left the party. Your solo game is ready.',notify=true){
     if(!session)return;
     const old=session;session=null;connected=false;connectionGeneration++;source?.close();source=null;
-    stopSounds();players.clear();seenEffects.clear();clearTimeout(profileTimer);lastFace=null;
+    stopSounds();players.clear();seenEffects.clear();seenIgnitions.clear();clearTimeout(profileTimer);lastFace=null;
     $('party-share-face').checked=false;$('party-room').hidden=true;$('party-lobby').hidden=false;
     bridge.leave();status(message);
     if(notify)request('leave',{},old.token).catch(()=>{});
@@ -142,6 +154,21 @@
   }
   window.Party={
     get active(){return !!session;},get connected(){return connected;},
+    nearestCracker(position){
+      if(!session||!connected)return null;let nearest=null;
+      for(const player of players.values()){
+        if(player.id===session.id||player.state.phase!=='idle'||player.state.crackerReserved||player.state.kind==='fuljhadi')continue;
+        const info=bridge.crackerInfo(player.state,player.target),distance=Math.hypot(position.x-info.point.x,position.y-info.point.y);
+        if(!nearest||distance<nearest.distance)nearest={id:player.id,name:player.name,state:player.state,...info,distance};
+      }
+      return nearest;
+    },
+    async igniteOther(ownerId){
+      if(!session||!connected||busy)return;
+      busy=true;bridge.clearKeys();
+      try{const response=await request('ignite',{ownerId,state:bridge.snapshot()});receiveIgnition(response.ignition);status('Lighting your friend’s cracker — step back after the fuse catches!');}
+      catch(error){status(error.message,true);}finally{busy=false;}
+    },
     get burningCrackers(){return session?[...players.values()].filter(player=>player.id!==session.id).map(player=>({state:player.state,target:player.target})):[];},
     get needsSkyView(){
       if(!session)return false;
@@ -172,6 +199,7 @@
         }).finally(()=>sending=false);
       }
       for(const [id,time] of seenEffects)if(now()-time>60000)seenEffects.delete(id);
+      for(const [id,time] of seenIgnitions)if(now()-time>60000)seenIgnitions.delete(id);
     },
     drawActors(context,localY,drawLocal){
       const actors=[...players.values()].filter(player=>player.id!==session.id).map(actor=>({y:actor.state.player.y,draw:()=>bridge.drawActor(actor),actor}));

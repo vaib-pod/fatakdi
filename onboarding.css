@@ -1,0 +1,24 @@
+.onboarding { position:fixed; inset:0; z-index:1000; pointer-events:none; isolation:isolate; }
+.onboarding[hidden] { display:none; }
+.onboarding-active:not(.phone-play) .stage-card { position:sticky; top:12px; }
+.tour-shield { position:fixed; pointer-events:auto; touch-action:none; }
+.tour-ring { position:fixed; z-index:1; border:2px solid #ffd294; border-radius:14px; box-shadow:0 0 0 9999px #040819c9,0 0 24px #ffc77580,inset 0 0 16px #ffc77518; pointer-events:none; }
+.tour-card { position:fixed; z-index:2; width:min(340px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); overflow:auto; overscroll-behavior:contain; padding:21px; border:1px solid #b3956d; border-radius:18px; background:linear-gradient(135deg,#29253c,#131c32); color:#fff2d4; box-shadow:0 16px 55px #0008; pointer-events:auto; }
+.tour-card:focus,.tour-card h2:focus { outline:none; }
+.tour-label { display:block; margin-bottom:10px; color:#ffd294; font-size:10px; line-height:1.4; font-weight:850; letter-spacing:.13em; text-transform:uppercase; }
+.tour-card h2 { font:500 26px/1.15 Georgia,serif; margin:0 0 11px; }
+.tour-card p { color:#cbd4e7; font-size:13px; line-height:1.6; margin:0; }
+.tour-actions { position:sticky; bottom:0; display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:7px; padding-top:10px; background:linear-gradient(0deg,#171d32 85%,#171d3200); }
+.tour-actions button { min-height:42px; padding:10px 16px; border:1px solid #596582; border-radius:10px; background:transparent; color:#fff2d4; font-size:12px; font-weight:800; }
+.tour-actions button:disabled { visibility:hidden; }
+.tour-actions .tour-next { background:#ffd294; border-color:#ffd294; color:#241d2c; }
+.tour-actions button:focus-visible { outline:2px solid #8fe4ca; outline-offset:3px; }
+.tour-light-preview #light-button { display:block; animation:none; }
+.phone-play-start { scroll-margin-top:14px; }
+@media (max-height:480px), (max-width:490px) {
+  .tour-card { padding:16px; }
+  .tour-label { margin-bottom:7px; font-size:9px; }
+  .tour-card h2 { font-size:23px; margin-bottom:8px; }
+  .tour-card p { font-size:12px; line-height:1.5; }
+  .tour-actions { margin-top:3px; }
+}

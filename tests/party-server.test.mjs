@@ -84,8 +84,56 @@ for(const kind of ['peacock','kitkat','double'])test(`${kind} selection and acti
   await post('show',{state},host.token);assert.equal((await events.next('show')).state.kind,kind);
   const late=await post('join',{name:'Late guest',code:host.code}),lateEvents=await stream(late.token);
   const room=await lateEvents.next('room');assert.equal(room.effects[0].state.kind,kind);
-  const audio=await fetch(base+'/sounds/'+(kind==='double'?'sky_shot':kind)+'.mp3',{headers:{Range:'bytes=0-99'}});
+  const file=(kind==='double'?'sky_shot':kind)+'.mp3';
+  const audio=await fetch(base+'/sounds/'+file,{headers:{Range:'bytes=0-99'}});
   assert.equal(audio.status,206);assert.equal((await audio.arrayBuffer()).byteLength,100);
+});
+
+test('outfit colours are validated, synchronized and included for late joiners',async t=>{
+  const {post,stream}=await fixture(t),host=await post('host',{name:'Host',state:{kurtaColor:'#5689D6',ghagraColor:'bad'}});
+  assert.equal(host.player.state.kurtaColor,'#5689d6');assert.equal(host.player.state.ghagraColor,'#b65baf');
+  const events=await stream(host.token);await events.next('room');
+  const guest=await post('join',{name:'Guest',code:host.code});await events.next('joined');
+  await post('update',{state:{character:'female',ghagraColor:'#63b17c',kurtaColor:'#d75b65'}},guest.token);
+  const moved=await events.next('move');assert.equal(moved.state.ghagraColor,'#63b17c');assert.equal(moved.state.kurtaColor,'#d75b65');
+  const late=await post('join',{name:'Late',code:host.code}),lateEvents=await stream(late.token);
+  assert.equal((await lateEvents.next('room')).players.find(p=>p.id===guest.id).state.ghagraColor,'#63b17c');
+});
+
+test('long Mirchi chains remain inside the ground at every player slot',async t=>{
+  const {post,stream}=await fixture(t),host=await post('host',{name:'Host'}),events=await stream(host.token);await events.next('room');
+  const participants=[host];for(let i=1;i<8;i++)participants.push(await post('join',{name:'Guest '+i,code:host.code}));
+  for(const member of participants){
+    await post('show',{state:{kind:'mirchi',phase:'show',mirchiCount:100}},member.token);
+    const show=await events.next('show');assert.ok(show.target.x-240>=74);assert.ok(show.target.x+240<=926);
+  }
+});
+
+test('friends light a shared cracker once, with a synchronized fuse and show',async t=>{
+  const {post,stream}=await fixture(t),owner=await post('host',{name:'Owner',state:{kind:'mirchi',mirchiCount:100}});
+  const events=await stream(owner.token);await events.next('room');
+  const lighter=await post('join',{name:'Lighter',code:owner.code});await events.next('joined');
+  assert.equal((await post('ignite',{ownerId:owner.id},lighter.token)).status,400);
+  const state={kind:'skyshot',phase:'show',player:{x:74,y:330},kurtaColor:'#5689d6'};
+  await post('update',{state},lighter.token);
+  const lit=await post('ignite',{ownerId:owner.id,state},lighter.token);assert.equal(lit.status,200);
+  const ignite=await events.next('ignite');assert.equal(ignite.igniterId,lighter.id);assert.equal(ignite.state.kind,'mirchi');assert.equal(ignite.target.x,314);
+  assert.equal((await post('ignite',{ownerId:owner.id,state},lighter.token)).status,409);
+  assert.equal((await post('show',{state:{kind:'rocket',phase:'show'}},owner.token)).status,409);
+  await post('update',{state:{kind:'rocket',phase:'idle'}},owner.token);
+  const held=await events.next('move');assert.equal(held.state.kind,'mirchi');assert.equal(held.state.crackerReserved,true);
+  const late=await post('join',{name:'Late',code:owner.code}),lateEvents=await stream(late.token);const pending=await lateEvents.next('room');assert.equal(pending.ignitions[0].id,ignite.id);
+  const fuse=await events.next('fuse');assert.equal(fuse.state.phase,'fuse');assert.equal(fuse.state.fuse,4);assert.equal(fuse.state.serverIgnition,true);
+  const show=await events.next('show');assert.equal(show.id,ignite.id);assert.equal(show.playerId,owner.id);assert.equal(show.igniterId,lighter.id);assert.equal(show.shared,true);assert.equal(show.state.kind,'mirchi');assert.equal(show.target.x,314);
+  const final=await post('join',{name:'Final',code:owner.code}),finalEvents=await stream(final.token);const room=await finalEvents.next('room');
+  assert.equal(room.effects[0].id,show.id);assert.equal(room.players.find(p=>p.id===lighter.id).state.kind,'skyshot');assert.equal(room.players.find(p=>p.id===lighter.id).state.phase,'show');
+});
+
+test('shared ignition stays within a room and cannot take a handheld Fuljhadi',async t=>{
+  const {post}=await fixture(t),owner=await post('host',{name:'Owner',state:{kind:'fuljhadi'}});
+  const guest=await post('join',{name:'Guest',code:owner.code}),outsider=await post('host',{name:'Outsider'});
+  assert.equal((await post('ignite',{ownerId:owner.id},outsider.token)).status,404);
+  assert.equal((await post('ignite',{ownerId:owner.id},guest.token)).status,400);
 });
 
 test('requires names and valid sessions; rooms isolate events and enforce capacity',async t=>{
@@ -100,6 +148,10 @@ test('requires names and valid sessions; rooms isolate events and enforce capaci
   const separate=await post('host',{name:'Other'}),events=await stream(separate.token);
   const room=await events.next('room');assert.equal(room.players.length,1);assert.notEqual(room.code,host.code);assert.equal(room.effects.length,0);
   assert.equal((await fetch(base+'/server.mjs')).status,404);
+  for(const file of ['onboarding.js','onboarding.css']){
+    const asset=await fetch(base+'/'+file);assert.equal(asset.status,200);
+    assert.match(asset.headers.get('content-type'),file.endsWith('.js')?/javascript/:/css/);
+  }
   const range=await fetch(base+'/sounds/sky_shot.mp3',{headers:{Range:'bytes=0-99'}});assert.equal(range.status,206);assert.equal((await range.arrayBuffer()).byteLength,100);
   const cross=await fetch(base+'/api/party/host',{method:'POST',headers:{Origin:'https://elsewhere.example','Content-Type':'application/json'},body:'{"name":"Blocked"}'});assert.equal(cross.status,403);
 });

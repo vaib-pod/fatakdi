@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#0b1025" />
   <title>Happy Diwali — Firecracker Night</title>
   <link rel="stylesheet" href="party.css" />
+  <link rel="stylesheet" href="onboarding.css" />
   <style>
     :root { --bg:#090d20; --panel:#141a32; --border:#2c3551; --cream:#fff2d4; --muted:#a4adcb; --gold:#ffc775; --coral:#ff916d; --mint:#8fe4ca; }
     * { box-sizing: border-box; }
@@ -93,6 +94,12 @@
     .character-choice svg { width:42px; height:54px; }
     .character-choice strong { font-size:12px; }
     .character-choice small { font-size:10px; color:#c3cbe0; }
+    .outfit-settings { margin-top:16px; padding-top:14px; border-top:1px solid #36405c; }
+    .outfit-colors { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; }
+    .outfit-choice { min-height:30px; border:2px solid transparent; border-radius:9px; background:var(--outfit); }
+    .outfit-choice[aria-pressed="true"] { border-color:#fff4d2; box-shadow:0 0 0 2px #ffc77577; }
+    .outfit-custom { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; color:#c5cce0; font-size:11px; }
+    .outfit-custom input { width:48px; height:34px; padding:3px; border:1px solid #64708b; border-radius:8px; background:#1e2540; cursor:pointer; }
     [hidden] { display:none!important; }
     .face-settings { border-top:1px solid #36405c; margin-top:15px; padding-top:15px; }
     .face-options { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
@@ -123,9 +130,6 @@
     .camera-actions .camera-primary { background:#ffd294; border-color:#ffd294; color:#211526; }
     .camera-actions button:disabled { opacity:.5; cursor:wait; }
     .panel-title { font-family:Georgia,serif; font-weight:500; font-size:23px; margin:0 0 12px; }
-    .howto { padding-left:19px; margin:0; color:#d3d8e8; font-size:12px; line-height:1.75; }
-    .howto li { padding:2px 0 6px 2px; }
-    .howto li::marker { color:var(--gold); font-weight:800; }
     .scorecard { display:flex; align-items:center; justify-content:space-between; background:linear-gradient(100deg,#3f343a,#242e40); border:1px solid #786052; border-radius:17px; padding:16px 20px; }
     .scorecard small { color:#efc5a6; display:block; font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
     .scorecard strong { display:block; font-family:Georgia,serif; font-size:37px; font-weight:400; line-height:1; margin-top:6px; }
@@ -225,7 +229,7 @@
     <div class="layout">
       <main class="stage-card">
         <div class="stage" id="stage">
-          <canvas id="game" width="1000" height="620" role="img" aria-label="A playable festival courtyard with a character, a firecracker and animated sky"></canvas>
+          <canvas id="game" tabindex="0" width="1000" height="620" role="img" aria-label="A playable festival courtyard with a character, a firecracker and animated sky"></canvas>
           <div class="phone-toolbar" aria-label="Fullscreen game controls">
             <button id="phone-options" type="button" aria-controls="game-options" aria-expanded="false">☰ Options</button>
             <button id="phone-exit" type="button" aria-label="Exit fullscreen play">✕ Exit</button>
@@ -343,6 +347,19 @@
               <strong>Female</strong><small>Ghagra choli</small>
             </button>
           </div>
+          <div class="outfit-settings">
+            <div class="panel-label" id="outfit-label">Kurta colour</div>
+            <div class="outfit-colors" role="group" aria-labelledby="outfit-label">
+              <button class="outfit-choice" type="button" data-outfit="#74c8bf" style="--outfit:#74c8bf" aria-label="Teal" aria-pressed="true"></button>
+              <button class="outfit-choice" type="button" data-outfit="#5689d6" style="--outfit:#5689d6" aria-label="Blue" aria-pressed="false"></button>
+              <button class="outfit-choice" type="button" data-outfit="#d75b65" style="--outfit:#d75b65" aria-label="Red" aria-pressed="false"></button>
+              <button class="outfit-choice" type="button" data-outfit="#dfae51" style="--outfit:#dfae51" aria-label="Golden" aria-pressed="false"></button>
+              <button class="outfit-choice" type="button" data-outfit="#b65baf" style="--outfit:#b65baf" aria-label="Purple" aria-pressed="false"></button>
+              <button class="outfit-choice" type="button" data-outfit="#63b17c" style="--outfit:#63b17c" aria-label="Green" aria-pressed="false"></button>
+              <button class="outfit-choice" type="button" data-outfit="#e88ba7" style="--outfit:#e88ba7" aria-label="Pink" aria-pressed="false"></button>
+            </div>
+            <label class="outfit-custom" for="outfit-color">Choose any colour <input id="outfit-color" type="color" value="#74c8bf" /></label>
+          </div>
           <div class="face-settings">
             <div class="panel-label">Your face</div>
             <div class="face-options" role="group" aria-label="Choose the character's face">
@@ -359,16 +376,21 @@
             <p class="face-note" id="face-note">Take a photo to put your face on either outfit. Your photo stays in this tab.</p>
           </div>
         </section>
-        <section class="panel">
-          <div class="panel-label">Your mission</div>
-          <h2 class="panel-title">Light up your night.</h2>
-          <ol class="howto"><li>Walk near your chosen firework or lantern. Fuljhadi is already in your hand.</li><li>Press the light button or Space to light it.</li><li>For crackers and rockets, retreat beyond the glowing circle when the alert appears.</li><li>With Fuljhadi, keep walking and press <b>R</b> or <b>Draw circles</b> to rotate your arm.</li><li>Watch skyshots burst overhead, or release a sky lantern and watch it float away.</li></ol>
-        </section>
         <div class="scorecard"><div><small>Successful shows</small><strong id="score">00</strong></div><div class="score-star">✷</div></div>
         <button class="restart" id="restart" type="button">↻ Restart game</button>
       </aside>
     </div>
     <div class="made">Built for the joy of a virtual Diwali night ✧</div>
+  </div>
+  <div class="onboarding" id="onboarding" hidden>
+    <div class="tour-shield"></div><div class="tour-shield"></div><div class="tour-shield"></div><div class="tour-shield"></div>
+    <div class="tour-ring" id="tour-ring" aria-hidden="true"></div>
+    <section class="tour-card" id="tour-card" role="dialog" aria-labelledby="tour-title" aria-describedby="tour-description">
+      <span class="tour-label" id="tour-progress" role="status" aria-live="polite"></span>
+      <h2 id="tour-title" tabindex="-1"></h2>
+      <p id="tour-description"></p>
+      <div class="tour-actions"><button id="tour-back" type="button" disabled>Back</button><button class="tour-next" id="tour-next" type="button">Next ?</button></div>
+    </section>
   </div>
   <dialog class="camera-dialog" id="face-dialog" aria-labelledby="camera-title" aria-describedby="camera-intro">
     <div class="camera-heading">
@@ -393,6 +415,7 @@
   <script src="face-avatar.js"></script>
   <script src="cracker-audio.js"></script>
   <script src="party.js"></script>
+  <script src="onboarding.js"></script>
   <script>
   (() => {
     'use strict';
@@ -407,7 +430,7 @@
     const scoreEl=$('score');
     const stage=$('stage'),swipeStick=$('swipe-stick'),phoneOptions=$('game-options');
     const W=1000,H=620, range=112, safeRadius=62;
-    let target={x:500,y:292},partyActor=null;
+    let target={x:500,y:292},partyActor=null,partyAnchor=null,guestLighting=null;
     const FaceAvatar={
       get isOpen(){return window.FaceAvatar.isOpen;},
       get active(){return partyActor?!!partyActor.face:window.FaceAvatar.active;},
@@ -481,7 +504,7 @@
     const wideCourtyardLayer=document.createElement('canvas');
     wideCourtyardLayer.width=W*3;wideCourtyardLayer.height=H+240;
     let smoke=[],shockwaves=[];
-    let state={phase:'idle',kind:'skyshot',skyshotCount:1,mirchiCount:10,singleColor:'golden',fuljhadiColor:'golden',armAngle:-.6,armRotating:false,focus:0,facingBack:false,character:'male',player:{x:500,y:536},score:0,clock:0,fuse:4.3,cam:0,walk:0,jumpTime:0,jumping:false,burst1:false,launchSound:false,ignitionLit:false,spin:0,retreated:false,now:0,flash:0,emission:0,smokeEmission:0,pops:0};
+    let state={phase:'idle',kind:'skyshot',skyshotCount:1,mirchiCount:10,singleColor:'golden',fuljhadiColor:'golden',armAngle:-.6,armRotating:false,focus:0,facingBack:false,character:'male',kurtaColor:'#74c8bf',ghagraColor:'#b65baf',player:{x:500,y:536},score:0,clock:0,fuse:4.3,cam:0,walk:0,jumpTime:0,jumping:false,burst1:false,launchSound:false,ignitionLit:false,spin:0,retreated:false,now:0,flash:0,emission:0,smokeEmission:0,pops:0};
     let audioCtx=null,audioMaster=null,noiseBuffer=null,audioLoop=null;
     let soundEnabled=true,soundVolume=.6,audioFocused=true,nextCrackle=0,audioSeed=78193;
     const audioVoices=new Set();
@@ -700,7 +723,7 @@
       audioLoop={key,voices};nextCrackle=state.clock+.1;
     }
     function syncAudio(){
-      if(FaceAvatar.isOpen){stopAllAudio();return;}
+      if(FaceAvatar.isOpen||Onboarding.active){stopAllAudio();return;}
       syncBombAudio();
       syncSkyshotAudio();
       if(!soundEnabled||!audioCtx||!audioFocused||document.hidden){if(audioLoop)stopAudioLoop();return;}
@@ -734,15 +757,25 @@
       skyshotAudioTracks.forEach(track=>{track.audio.volume=soundVolume*(state.skyshotCount>1?.65:1);});
       if(audioMaster)audioMaster.gain.setTargetAtTime(soundEnabled?soundVolume:0,audioCtx.currentTime,.025);
     });
+    function crackerSpot(selection,anchor){
+      if(selection.kind!=='mirchi')return {...anchor};
+      const count=selection.mirchiCount||10,start=(count===10?-48:-count*3)*.8,end=(count===10?46.5:count*3)*.8;
+      return {x:Math.max(74-start,Math.min(1000-74-end,anchor.x)),y:anchor.y};
+    }
+    function crackerInfo(selection,anchor){
+      const spot=crackerSpot(selection,anchor),count=selection.mirchiCount||10;
+      return {target:spot,point:{x:spot.x+(selection.kind==='mirchi'?(count===10?-48:-count*3)*.8:0),y:spot.y}};
+    }
     const interactionPoint=()=>({x:target.x+(state.kind==='mirchi'?mirchiLayout().startX*bombScale:0),y:target.y});
     const dist=()=>{const point=interactionPoint();return Math.hypot(state.player.x-point.x,state.player.y-point.y);};
     const safetyDistance=()=>Math.hypot(Math.max(0,Math.abs(state.player.x-target.x)-(state.kind==='mirchi'?mirchiLayout().endX*bombScale:0)),state.player.y-target.y);
     const rand=(a,b)=>a+Math.random()*(b-a);
     const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
     const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
-    const canMove=()=> !(phonePlay&&(phoneOptionsOpen||phonePortrait.matches))&&(!Party.active||Party.connected)&&['idle','fuse','show'].includes(state.phase);
+    const canMove=()=> !Onboarding.active&&!guestLighting&&!(phonePlay&&(phoneOptionsOpen||phonePortrait.matches))&&(!Party.active||Party.connected)&&['idle','fuse','show'].includes(state.phase);
     function burningZone(selection,spot){
       if(!['fuse','show'].includes(selection.phase)||['fuljhadi','lantern'].includes(selection.kind))return null;
+      spot=crackerSpot(selection,spot);
       const count=selection.mirchiCount||10;
       const start=selection.kind==='mirchi'?(count===10?-48:-count*3)*bombScale:0;
       const end=selection.kind==='mirchi'?(count===10?46.5:count*3)*bombScale:0;
@@ -772,10 +805,15 @@
     const walking=()=>partyActor?partyActor.moving:canMove()&&(['up','down','left','right'].some(dir=>keys.has(dir))||Math.hypot(swipe.x,swipe.y)>.08);
     const jumpLift=()=>{const progress=1-(state.jumpTime||0)/jumpDuration;return 56*4*progress*(1-progress);};
     const playerBounce=()=>(walking()?Math.sin(state.walk)*3:0)-jumpLift();
-    const canJump=()=>['fuse','show'].includes(state.phase)&&!FaceAvatar.isOpen&&!(phonePlay&&(phoneOptionsOpen||phonePortrait.matches))&&(!Party.active||Party.connected);
+    const canJump=()=>['fuse','show'].includes(state.phase)&&!FaceAvatar.isOpen&&!Onboarding.active&&!(phonePlay&&(phoneOptionsOpen||phonePortrait.matches))&&(!Party.active||Party.connected);
     function jump(){if(canJump()){state.jumping=!state.jumping;if(state.jumping&&!state.jumpTime)state.jumpTime=jumpDuration;}}
     function tint(color,amount){
       return '#'+[1,3,5].map(i=>Math.round(parseInt(color.slice(i,i+2),16)*(1-amount)+255*amount).toString(16).padStart(2,'0')).join('');
+    }
+    function outfitColors(){
+      const main=state.character==='female'?(state.ghagraColor||'#b65baf'):(state.kurtaColor||'#74c8bf');
+      const dark=amount=>'#'+[1,3,5].map(i=>Math.round(parseInt(main.slice(i,i+2),16)*(1-amount)).toString(16).padStart(2,'0')).join('');
+      return {main,light:tint(main,.16),shade:dark(.17),collar:dark(.28),blouse:tint(main,.28),skirtDark:dark(.25),skirtLight:tint(main,.18)};
     }
     const shotPalettes=shotColors.map(color=>[color,tint(color,.25),tint(color,.5),tint(color,.12)]);
     const flarePalettes=Object.fromEntries(Object.entries(flareColors).map(([name,color])=>[name,[color,tint(color,.25),tint(color,.5),tint(color,.12)]]));
@@ -795,6 +833,7 @@
     }
     function setToast(txt,shown){if(toast.textContent!==txt)toast.textContent=txt;toast.classList.toggle('visible',shown);}
     function reset(full=false,preservePlayer=false){
+      if(full||!preservePlayer)guestLighting=null;state.crackerReserved=false;state.serverIgnition=false;
       state.jumpTime=0;state.jumping=false;
       if(partyActor){partyActor.effectActive=false;state.phase='idle';state.clock=0;particles.length=0;smoke.length=0;shockwaves.length=0;skyshots.length=0;fuljhadiTrace.length=0;return;}
       stopAllAudio();
@@ -813,24 +852,24 @@
       setToast('',false);
       updateUI();
     }
-    function choose(kind){if(state.phase!=='idle')return;stopAllAudio();state.kind=kind;state.clock=0;particles.length=0;fuljhadiTrace.length=0;state.focus=0;state.armAngle=-.6;state.armRotating=false;
+    function choose(kind){if(state.phase!=='idle'||state.crackerReserved)return;stopAllAudio();state.kind=kind;state.clock=0;particles.length=0;fuljhadiTrace.length=0;state.focus=0;state.armAngle=-.6;state.armRotating=false;
       state.fuse=fuseDuration();
       pickButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.type===kind)));
       updateUI();tone(570,.09);
     }
     pickButtons.forEach(b=>b.addEventListener('click',()=>choose(b.dataset.type)));
     function chooseShotCount(count){
-      if(state.phase!=='idle'||![1,6,12].includes(count))return;
+      if(state.phase!=='idle'||state.crackerReserved||![1,6,12].includes(count))return;
       state.skyshotCount=count;updateUI();tone(570,.09);
     }
     shotButtons.forEach(b=>b.addEventListener('click',()=>chooseShotCount(Number(b.dataset.shots))));
     function chooseMirchiCount(count){
-      if(state.phase!=='idle'||![10,50,100].includes(count))return;
+      if(state.phase!=='idle'||state.crackerReserved||![10,50,100].includes(count))return;
       state.mirchiCount=count;updateUI();tone(570,.09);
     }
     mirchiButtons.forEach(b=>b.addEventListener('click',()=>chooseMirchiCount(Number(b.dataset.count))));
     function chooseFlareColor(color){
-      if(state.phase!=='idle'||!Object.hasOwn(flareColors,color))return;
+      if(state.phase!=='idle'||state.crackerReserved||!Object.hasOwn(flareColors,color))return;
       if(state.kind==='fuljhadi')state.fuljhadiColor=color;
       else if(state.kind==='skyshot'&&state.skyshotCount===1)state.singleColor=color;
       updateUI();
@@ -841,15 +880,32 @@
     function chooseCharacter(character){
       if(character!=='male'&&character!=='female')return;
       state.character=character;
+      updateOutfitChoices();
       characterButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.character===character)));
       canvas.setAttribute('aria-label','A playable festival courtyard with a '+character+' character wearing '+(character==='male'?'a kurta pajama':'a ghagra choli')+(FaceAvatar.active?' and your captured face':'')+', a firecracker and animated sky');
     }
     characterButtons.forEach(b=>b.addEventListener('click',()=>{chooseCharacter(b.dataset.character);tone(570,.09);}));
     chooseCharacter(state.character);
+    function updateOutfitChoices(){
+      const color=state.character==='female'?(state.ghagraColor||'#b65baf'):(state.kurtaColor||'#74c8bf');
+      $('outfit-label').textContent=state.character==='female'?'Ghagra choli colour':'Kurta colour';$('outfit-color').value=color;
+      document.querySelectorAll('[data-outfit]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.outfit===color)));
+    }
+    function chooseOutfit(color){
+      if(!/^#[a-f\d]{6}$/i.test(color))return;
+      state[state.character==='female'?'ghagraColor':'kurtaColor']=color.toLowerCase();updateOutfitChoices();
+    }
+    document.querySelectorAll('[data-outfit]').forEach(button=>button.addEventListener('click',()=>chooseOutfit(button.dataset.outfit)));
+    $('outfit-color').addEventListener('input',event=>chooseOutfit(event.target.value));
     $('restart').addEventListener('click',()=>{reset(true);tone(450,.10);});
     function light(){
+      if(Onboarding.active)return;
       if(phonePlay&&(phoneOptionsOpen||phonePortrait.matches))return;
       if(Party.active&&!Party.connected)return;
+      if(guestLighting)return;
+      const other=Party.active?Party.nearestCracker(state.player):null;
+      if(['idle','fuse','show'].includes(state.phase)&&other&&other.distance<=range&&(state.phase!=='idle'||state.crackerReserved||other.distance<dist())){Party.igniteOther(other.id);return;}
+      if(state.crackerReserved)return;
       if(state.phase!=='idle'||(state.kind!=='fuljhadi'&&dist()>range))return;
       state.phase='lighting';state.clock=0;state.ignitionLit=false;state.facingBack=true;if(state.kind!=='fuljhadi')clearMovement();
       pickButtons.forEach(b=>b.disabled=true);
@@ -859,6 +915,7 @@
     lightButton.addEventListener('click',light);
     jumpButton.addEventListener('click',jump);
     document.addEventListener('keydown',e=>{
+      if(Onboarding.active)return;
       if(e.key==='Escape'&&phoneOptionsOpen){setPhoneOptions(false);return;}
       if(phoneOptionsOpen)return;
       if(FaceAvatar.isOpen||e.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;
@@ -869,6 +926,7 @@
       if(e.key.toLowerCase()==='j'){e.preventDefault();if(!e.repeat)jump();}
     });
     document.addEventListener('keyup',e=>{
+      if(Onboarding.active)return;
       if(e.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;
       const dir=({ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',W:'up',a:'left',A:'left',s:'down',S:'down',d:'right',D:'right'})[e.key];
       if(dir){e.preventDefault();keys.delete(dir);}
@@ -921,7 +979,7 @@
     }
     async function enterPhonePlay(){
       if(phonePlay)return;phoneScrollY=window.scrollY;phonePlay=true;
-      document.body.classList.add('phone-play');setPhoneOptions(false);unlockAudio();
+      document.body.classList.add('phone-play');setPhoneOptions(false);unlockAudio();Onboarding.phoneChanged();
       const root=document.documentElement,request=root.requestFullscreen||root.webkitRequestFullscreen;
       if(request){try{await request.call(root,{navigationUI:'hide'});phoneFullscreen=!!(document.fullscreenElement||document.webkitFullscreenElement);}catch(_){/* The viewport layout also works without native fullscreen. */}}
       if(!phonePlay){if((document.fullscreenElement||document.webkitFullscreenElement)===root){const exit=document.exitFullscreen||document.webkitExitFullscreen;try{await exit?.call(document);}catch(_){}}return;}
@@ -929,7 +987,7 @@
     }
     function leavePhonePlay(){
       if(!phonePlay)return;phonePlay=false;setPhoneOptions(false);clearMovement();
-      document.body.classList.remove('phone-play');phoneOptions.inert=false;
+      document.body.classList.remove('phone-play');phoneOptions.inert=false;Onboarding.phoneChanged();
       if(phoneOrientationLocked){screen.orientation?.unlock?.();phoneOrientationLocked=false;}
       const fullscreen=document.fullscreenElement||document.webkitFullscreenElement;
       phoneFullscreen=false;
@@ -1050,7 +1108,7 @@
       const k=clamp((time-shot.launchAt)/(shot.burstAt-shot.launchAt),0,1),travel=smooth(k);
       return {x:shot.fromX+(shot.x-shot.fromX)*travel+(shot.x===shot.fromX?0:Math.sin(k*Math.PI)*4),y:shot.fromY+(shot.y-shot.fromY)*travel};
     }
-    function beginShow(){
+    function beginShow(publish=true){
       stopAudioLoop();state.phase='show';state.clock=0;state.burst1=false;state.launchSound=false;
       state.emission=0;state.smokeEmission=0;state.pops=0;
       if(isWideLaunch()||state.kind==='skyshot'||state.kind==='double')prepareSkyshots();
@@ -1061,30 +1119,35 @@
       setToast(state.kind==='lantern'||state.kind==='fuljhadi'?'':'Nice retreat! Enjoy the show ✦',state.kind!=='lantern'&&state.kind!=='fuljhadi');
       warning.classList.remove('show');
       syncBombAudio();
-      Party.show();
+      if(publish)Party.show();
     }
     function updateUI(){
+      if(Party.active&&!partyActor&&partyAnchor)target=crackerSpot(state,partyAnchor);
       const d=dist(),safe=safetyDistance(),near=d<=range;
       const lantern=state.kind==='lantern';
       const handheld=state.kind==='fuljhadi';
       $('skyshot-options').hidden=state.kind!=='skyshot';
       $('mirchi-options').hidden=state.kind!=='mirchi';
-      mirchiButtons.forEach(b=>{b.disabled=state.phase!=='idle';b.setAttribute('aria-pressed',String(Number(b.dataset.count)===state.mirchiCount));});
+      mirchiButtons.forEach(b=>{b.disabled=state.phase!=='idle'||!!state.crackerReserved||!!guestLighting;b.setAttribute('aria-pressed',String(Number(b.dataset.count)===state.mirchiCount));});
       $('flare-options').hidden=!(handheld||(state.kind==='skyshot'&&state.skyshotCount===1));
       const selectedColor=handheld?state.fuljhadiColor:state.singleColor;
-      colorButtons.forEach(b=>{b.disabled=state.phase!=='idle';b.setAttribute('aria-pressed',String(b.dataset.color===selectedColor));});
+      colorButtons.forEach(b=>{b.disabled=state.phase!=='idle'||!!state.crackerReserved||!!guestLighting;b.setAttribute('aria-pressed',String(b.dataset.color===selectedColor));});
       rotateButton.hidden=!handheld;rotateButton.setAttribute('aria-pressed',String(state.armRotating));
       jumpButton.hidden=!['fuse','show'].includes(state.phase);
       jumpButton.disabled=!canJump();jumpButton.setAttribute('aria-pressed',String(!!state.jumping));
       const jumpText=state.jumping?'■ Stop jumping':'↑ Jump';if(jumpButton.textContent!==jumpText)jumpButton.textContent=jumpText;
       const rotateText=state.armRotating?'■ Stop circles':'↻ Draw circles';if(rotateButton.textContent!==rotateText)rotateButton.textContent=rotateText;
       distanceEl.parentElement.hidden=handheld;
-      shotButtons.forEach(b=>{b.disabled=state.phase!=='idle';b.setAttribute('aria-pressed',String(Number(b.dataset.shots)===state.skyshotCount));});
+      shotButtons.forEach(b=>{b.disabled=state.phase!=='idle'||!!state.crackerReserved||!!guestLighting;b.setAttribute('aria-pressed',String(Number(b.dataset.shots)===state.skyshotCount));});
       const distanceText=state.phase==='fuse'?(safe>=safeRadius?'✓ Safe distance':'Move back '+Math.ceil(safeRadius-safe)+' px'):'Distance: '+Math.round(d);
       if(distanceEl.textContent!==distanceText)distanceEl.textContent=distanceText;
-      const lightText=handheld?'✦ Light fuljhadi':lantern?'✦ Light & release':'✦ Light it!';
+      const other=Party.active?Party.nearestCracker(state.player):null;
+      const useOther=other&&other.distance<=range&&(state.phase!=='idle'||state.crackerReserved||other.distance<d);
+      const lightText=useOther?'✦ Light '+other.name+'’s '+names[other.state.kind]:handheld?'✦ Light fuljhadi':lantern?'✦ Light & release':'✦ Light it!';
       if(lightButton.textContent!==lightText)lightButton.textContent=lightText;
-      lightButton.classList.toggle('visible',state.phase==='idle'&&(near||handheld));
+      lightButton.classList.toggle('visible',!guestLighting&&(useOther&&['idle','fuse','show'].includes(state.phase)||state.phase==='idle'&&!state.crackerReserved&&(near||handheld)));
+      pickButtons.forEach(button=>button.disabled=state.phase!=='idle'||!!state.crackerReserved||!!guestLighting);
+      $('restart').disabled=!!state.crackerReserved||!!state.serverIgnition||!!guestLighting;
       if(state.phase==='idle'){
         setToast(!handheld&&near?'You’re close enough to light it!':'',!handheld&&near);
       }
@@ -1095,6 +1158,7 @@
       }
     }
     function update(dt){
+      if(guestLighting){guestLighting.clock+=dt;if(guestLighting.clock>=ignitionDuration)guestLighting=null;}
       if(!['fuse','show'].includes(state.phase))state.jumping=false;
       const jumpRemaining=(state.jumpTime||0)-dt;
       state.jumpTime=state.jumping&&jumpRemaining<=0?jumpDuration+jumpRemaining%jumpDuration:Math.max(0,jumpRemaining);
@@ -1124,7 +1188,7 @@
       } else if(state.phase==='fuse'){
         state.fuse=state.kind==='aloo'&&bombPlaybackActive()?Math.max(0,alooRecording.blastAt-bombTracks.aloo.audio.currentTime):state.fuse-dt;
         if(safetyDistance()>=safeRadius)state.retreated=true;
-        if(state.fuse<=0){
+        if(state.fuse<=0&&!state.serverIgnition){
           if(safetyDistance()>=safeRadius)beginShow();
           else {state.phase='fail';state.clock=0;warning.classList.remove('show');setToast('You stayed inside the safety circle. Try again!',true);tone(185,.24,'triangle');}
         }
@@ -1496,7 +1560,7 @@
         const b=2+Math.sin(state.now*3)*2;
         const point=interactionPoint();
         ctx.strokeStyle='#ffdca986';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(point.x,y+6,43+b,19+b/2,0,0,2*Math.PI);ctx.stroke();
-        ctx.fillStyle='#ffe4c4';ctx.font='700 12px system-ui';ctx.textAlign='center';ctx.fillText(isMultiSkyshot()?state.skyshotCount+'-shot Skyshot':state.kind==='mirchi'?state.mirchiCount+'-cracker Mirchi':names[state.kind],x,y-(state.kind==='rocket'?119:state.kind==='lantern'?98:68));
+        ctx.fillStyle='#ffe4c4';ctx.font='700 12px system-ui';ctx.textAlign=state.kind==='mirchi'?'left':'center';ctx.fillText(isMultiSkyshot()?state.skyshotCount+'-shot Skyshot':state.kind==='mirchi'?state.mirchiCount+'-cracker Mirchi':names[state.kind],state.kind==='mirchi'?x+mirchiLayout().startX*bombScale+4:x,y-(state.kind==='rocket'?119:state.kind==='lantern'?98:68));ctx.textAlign='center';
       }
       if(burningZone(state,target)){
         ctx.save();ctx.setLineDash([9,9]);ctx.lineDashOffset=-state.now*35;
@@ -1511,6 +1575,12 @@
       ctx.ellipse(state.player.x,state.player.y+2,(state.character==='female'?29:23)*scale,8*scale,0,0,Math.PI*2);ctx.fill();ctx.restore();
     }
     function drawPlayer(){
+      const outfit=outfitColors();
+      if(guestLighting){
+        const savedState=state,savedTarget=target,pose=guestLighting;
+        state={...state,kind:pose.state.kind,mirchiCount:pose.state.mirchiCount,skyshotCount:pose.state.skyshotCount,phase:'lighting',clock:pose.clock,facingBack:true,ignitionLit:pose.clock>=ignitionContact};target=pose.target;guestLighting=null;
+        try{drawPlayer();}finally{state=savedState;target=savedTarget;guestLighting=pose;}return;
+      }
       if(state.facingBack){drawRearPlayer();return;}
       const x=state.player.x,y=state.player.y;
       const female=state.character==='female';
@@ -1533,13 +1603,13 @@
           ctx.fillStyle='#292639';ctx.beginPath();ctx.moveTo(-16,-73);ctx.quadraticCurveTo(-23,-99,0,-91);
           ctx.quadraticCurveTo(23,-96,18,-68);ctx.lineTo(22,-39);ctx.quadraticCurveTo(0,-31,-21,-40);ctx.closePath();ctx.fill();
         }
-        roundRect(-17,-57,34,23,8,'#ee8a9d');
-        line(-16,-49,-24,-33,'#ee8a9d',9);if(!holding)line(16,-49,24,-35,'#ee8a9d',9);
+        roundRect(-17,-57,34,23,8,outfit.blouse);
+        line(-16,-49,-24,-33,outfit.blouse,9);if(!holding)line(16,-49,24,-35,outfit.blouse,9);
         line(-24,-33,-25,-25,'#e6ae87',7);if(!holding)line(24,-35,25,-27,'#e6ae87',7);
         roundRect(-12,-35,24,6,2,'#e6ae87');
         // Flared ghagra with gold pleats, motifs, and an embroidered hem.
         ctx.save();ctx.rotate(walkingNow?Math.sin(state.walk)*.035:0);
-        const skirt=ctx.createLinearGradient(-30,-30,30,-5);skirt.addColorStop(0,'#874b9e');skirt.addColorStop(.5,'#cf6da8');skirt.addColorStop(1,'#a4488c');
+        const skirt=ctx.createLinearGradient(-30,-30,30,-5);skirt.addColorStop(0,outfit.skirtDark);skirt.addColorStop(.5,outfit.skirtLight);skirt.addColorStop(1,outfit.main);
         ctx.fillStyle=skirt;ctx.beginPath();ctx.moveTo(-13,-31);ctx.lineTo(13,-31);ctx.quadraticCurveTo(24,-17,32,-6);
         ctx.quadraticCurveTo(0,5,-32,-6);ctx.quadraticCurveTo(-23,-19,-13,-31);ctx.closePath();ctx.fill();
         for(let i=-2;i<=2;i++){
@@ -1555,12 +1625,12 @@
         line(-27,-29,-22,-29,'#ffcf79',2);if(!holding)line(22,-31,27,-31,'#ffcf79',2);
       }else{
         // A long teal kurta with side slits, a standing collar, and gold trim.
-        ctx.fillStyle='#74c8bf';ctx.beginPath();ctx.moveTo(-17,-56);ctx.quadraticCurveTo(0,-61,17,-56);
+        ctx.fillStyle=outfit.main;ctx.beginPath();ctx.moveTo(-17,-56);ctx.quadraticCurveTo(0,-61,17,-56);
         ctx.lineTo(23,-13);ctx.lineTo(5,-11);ctx.lineTo(0,-15);ctx.lineTo(-5,-11);ctx.lineTo(-23,-13);ctx.closePath();ctx.fill();
-        ctx.fillStyle='#62a89e';ctx.beginPath();ctx.moveTo(-17,-53);ctx.lineTo(-9,-55);ctx.lineTo(-12,-14);ctx.lineTo(-22,-15);ctx.closePath();ctx.fill();
-        line(-16,-48,-25,-25,'#83d4cc',10);if(!holding)line(16,-48,25,-27,'#83d4cc',10);
+        ctx.fillStyle=outfit.shade;ctx.beginPath();ctx.moveTo(-17,-53);ctx.lineTo(-9,-55);ctx.lineTo(-12,-14);ctx.lineTo(-22,-15);ctx.closePath();ctx.fill();
+        line(-16,-48,-25,-25,outfit.light,10);if(!holding)line(16,-48,25,-27,outfit.light,10);
         line(-28,-29,-22,-27,'#ffdc9b',3);if(!holding)line(22,-31,28,-29,'#ffdc9b',3);
-        roundRect(-7,-59,14,8,3,'#559e98');
+        roundRect(-7,-59,14,8,3,outfit.collar);
         line(-6,-57,0,-52,'#ffe0a4',1.5);line(6,-57,0,-52,'#ffe0a4',1.5);
         line(0,-52,0,-33,'#ffe0a4',1.6);
         for(let i=0;i<3;i++)roundRect(2,-48+i*6,2,2,1,'#ffe0a4');
@@ -1612,6 +1682,7 @@
         tip:{x:hand.x+ux*taperLength,y:hand.y+uy*taperLength},contact};
     }
     function drawRearPlayer(){
+      const outfit=outfitColors();
       const {x,y}=state.player,female=state.character==='female',holding=state.kind==='fuljhadi';
       const lighting=state.phase==='lighting',pose=ignitionPose(),bend=pose.bend;
       const bounce=playerBounce(),walkingNow=walking(),stride=walkingNow?Math.sin(state.walk)*(female?5:8):0;
@@ -1626,19 +1697,19 @@
       for(const side of [-1,1]){
         if((holding&&side===1)||(lighting&&side===pose.side))continue;
         const shoulder={x:side*17,y:-50+bend*9},hand={x:side*25,y:-25+bend*3};
-        line(shoulder.x,shoulder.y,hand.x,hand.y,female?'#ee8a9d':'#83d4cc',female?9:10);
+        line(shoulder.x,shoulder.y,hand.x,hand.y,female?outfit.blouse:outfit.light,female?9:10);
         line(hand.x-3,hand.y-3,hand.x+3,hand.y-3,'#ffdc9b',2);
         ctx.fillStyle='#edb18a';ctx.beginPath();ctx.arc(hand.x,hand.y,5,0,Math.PI*2);ctx.fill();
       }
       if(lighting){
-        line(pose.shoulder.x-x,pose.shoulder.y-y,pose.elbow.x-x,pose.elbow.y-y,female?'#ee8a9d':'#83d4cc',9);
-        line(pose.elbow.x-x,pose.elbow.y-y,pose.hand.x-x,pose.hand.y-y,female?'#e6ae87':'#83d4cc',7);
+        line(pose.shoulder.x-x,pose.shoulder.y-y,pose.elbow.x-x,pose.elbow.y-y,female?outfit.blouse:outfit.light,9);
+        line(pose.elbow.x-x,pose.elbow.y-y,pose.hand.x-x,pose.hand.y-y,female?'#e6ae87':outfit.light,7);
       }
       const top=-57+bend*10,width=17+bend*4;
       if(female){
-        roundRect(-width,top,width*2,-33-top,7,'#ee8a9d');
+        roundRect(-width,top,width*2,-33-top,7,outfit.blouse);
         roundRect(-12,-35,24,6,2,'#e6ae87');
-        const skirt=ctx.createLinearGradient(-30,-30,30,-5);skirt.addColorStop(0,'#874b9e');skirt.addColorStop(.5,'#cf6da8');skirt.addColorStop(1,'#a4488c');
+        const skirt=ctx.createLinearGradient(-30,-30,30,-5);skirt.addColorStop(0,outfit.skirtDark);skirt.addColorStop(.5,outfit.skirtLight);skirt.addColorStop(1,outfit.main);
         ctx.fillStyle=skirt;ctx.beginPath();ctx.moveTo(-13,-31);ctx.lineTo(13,-31);ctx.quadraticCurveTo(24,-17,32,-6);
         ctx.quadraticCurveTo(0,5,-32,-6);ctx.quadraticCurveTo(-23,-19,-13,-31);ctx.closePath();ctx.fill();
         for(let i=-2;i<=2;i++){line(i*5,-28,i*11,-5,'#f6bd897a',1.2);star(i*9,-13+Math.abs(i)*1.5,1.7,'#ffe3a4');}
@@ -1650,20 +1721,20 @@
         line(-16,top+2,17,-24,'#8fe4ca',8);line(-19,top+3,14,-23,'#ffe3a4',1.5);
         line(14,-25,17,-13,'#8fe4ca',7);line(14,-14,20,-13,'#ffe3a4',2);
       }else{
-        ctx.fillStyle='#74c8bf';ctx.beginPath();ctx.moveTo(-width,top);ctx.quadraticCurveTo(0,top-5,width,top);
+        ctx.fillStyle=outfit.main;ctx.beginPath();ctx.moveTo(-width,top);ctx.quadraticCurveTo(0,top-5,width,top);
         ctx.lineTo(23,-13);ctx.lineTo(5,-11);ctx.lineTo(0,-15);ctx.lineTo(-5,-11);ctx.lineTo(-23,-13);ctx.closePath();ctx.fill();
-        line(-width+3,top+5,-19,-17,'#62a89e',3);
+        line(-width+3,top+5,-19,-17,outfit.shade,3);
         line(-20,-16,-5,-14,'#ecca8b',2);line(5,-14,20,-16,'#ecca8b',2);
-        ctx.strokeStyle='#91dad0';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-13,top+10);
+        ctx.strokeStyle=outfit.light;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-13,top+10);
         ctx.quadraticCurveTo(0,top+14,13,top+10);ctx.stroke();
       }
       const headY=-70+bend*14;
       roundRect(-6,headY+10,12,8,3,'#d69b7e');
-      if(!female)roundRect(-8,top-2,16,6,3,'#559e98');
+      if(!female)roundRect(-8,top-2,16,6,3,outfit.collar);
       ctx.fillStyle='#e6ae87';ctx.beginPath();ctx.ellipse(-16,headY+2,3,5,0,0,Math.PI*2);ctx.ellipse(16,headY+2,3,5,0,0,Math.PI*2);ctx.fill();
       ctx.fillStyle=FaceAvatar.hairColor||(female?'#292639':'#2b3045');ctx.beginPath();ctx.ellipse(0,headY,17,17-bend*3,0,0,Math.PI*2);ctx.fill();
       if(female){
-        line(-7,headY+11,7,headY+11,'#cf6da8',2);
+        line(-7,headY+11,7,headY+11,outfit.skirtLight,2);
         for(const ex of [-17,17]){ctx.fillStyle='#ffda8a';ctx.beginPath();ctx.ellipse(ex,headY+7,2,3,0,0,Math.PI*2);ctx.fill();}
       }else{
         ctx.strokeStyle='#3a3f55';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,headY-1,12,Math.PI*1.2,Math.PI*1.75);ctx.stroke();
@@ -1816,11 +1887,12 @@
       ctx.restore();
     }
     function drawFuljhadi(){
+      const outfit=outfitColors();
       const pose=fuljhadiPose(),female=state.character==='female';
       const sleeve=female?16:26;
       ctx.save();ctx.lineCap='round';
       line(pose.shoulder.x,pose.shoulder.y,pose.hand.x,pose.hand.y,'#e6ae87',7);
-      line(pose.shoulder.x,pose.shoulder.y,pose.shoulder.x+pose.dx*sleeve,pose.shoulder.y+pose.dy*sleeve,female?'#ee8a9d':'#83d4cc',female?9:10);
+      line(pose.shoulder.x,pose.shoulder.y,pose.shoulder.x+pose.dx*sleeve,pose.shoulder.y+pose.dy*sleeve,female?outfit.blouse:outfit.light,female?9:10);
       const cuff=female?26:sleeve;
       line(pose.shoulder.x+pose.dx*cuff-pose.dy*4,pose.shoulder.y+pose.dy*cuff+pose.dx*4,pose.shoulder.x+pose.dx*cuff+pose.dy*4,pose.shoulder.y+pose.dy*cuff-pose.dx*4,'#ffd48c',2);
       line(pose.hand.x,pose.hand.y,pose.tip.x,pose.tip.y,'#a8b9cd',1.6);
@@ -1908,7 +1980,7 @@
       drawShowLight();drawFirecracker();
       if(Party.active)Party.drawProps();
       if(Party.active)Party.drawActors(ctx,state.player.y,()=>drawPlayer());else drawPlayer();
-      if(state.kind==='fuljhadi'){drawFuljhadiTrace();drawFuljhadi();}
+      if(state.kind==='fuljhadi'&&!guestLighting){drawFuljhadiTrace();drawFuljhadi();}
       drawSmoke();
       if(state.phase==='show'&&isWideLaunch())drawMultiSkyshots();
       if(!isSingleSkyView()&&(state.kind!=='skyshot'||isWideLaunch()))drawParticles();
@@ -1925,14 +1997,35 @@
     }
     let last=0;
     function withPartyActor(actor,callback){
-      const saved={state,target,particles,skyshots,fuljhadiTrace,smoke,shockwaves,partyActor};
-      state=actor.state;target=actor.target;particles=actor.particles;skyshots=actor.skyshots;
+      const saved={state,target,particles,skyshots,fuljhadiTrace,smoke,shockwaves,partyActor,guestLighting};
+      state=actor.state;target=crackerSpot(actor.state,actor.target);particles=actor.particles;skyshots=actor.skyshots;guestLighting=actor.guestLighting||null;
       fuljhadiTrace=actor.fuljhadiTrace;smoke=actor.smoke;shockwaves=actor.shockwaves;partyActor=actor;
-      try{return callback();}finally{({state,target,particles,skyshots,fuljhadiTrace,smoke,shockwaves,partyActor}=saved);}
+      try{return callback();}finally{actor.guestLighting=guestLighting;({state,target,particles,skyshots,fuljhadiTrace,smoke,shockwaves,partyActor,guestLighting}=saved);}
     }
     Party.attach({
       snapshot:()=>({...state,player:{...state.player}}),
-      audioSettings:()=>({enabled:soundEnabled&&audioFocused&&!document.hidden&&!FaceAvatar.isOpen,volume:soundVolume,context:audioCtx}),
+      crackerInfo,
+      reserveCracker(info){
+        for(const key of ['kind','skyshotCount','mirchiCount','singleColor','fuljhadiColor'])state[key]=info.state[key];
+        state.phase='idle';state.clock=0;state.ignitionLit=false;state.crackerReserved=true;state.serverIgnition=true;updateUI();
+      },
+      lightAnother(info,age=0){
+        if(age>=ignitionDuration)return;
+        clearMovement();state.facingBack=true;guestLighting={state:info.state,target:info.target,clock:age};
+      },
+      reserveActor(actor){actor.state.crackerReserved=true;},
+      lightActor(actor,info,age=0){if(age<ignitionDuration)actor.guestLighting={state:info.state,target:info.target,clock:age};},
+      startSharedFuse(info,age=0){
+        for(const key of ['kind','skyshotCount','mirchiCount','singleColor','fuljhadiColor'])state[key]=info.state[key];
+        if(partyAnchor)target=crackerSpot(state,partyAnchor);
+        state.phase='fuse';state.clock=0;state.fuse=Math.max(0,info.state.fuse-age);state.crackerReserved=false;state.serverIgnition=true;updateUI();syncAudio();
+      },
+      startSharedShow(effect){
+        state.crackerReserved=false;state.serverIgnition=false;
+        for(const key of ['kind','skyshotCount','mirchiCount','singleColor','fuljhadiColor'])state[key]=effect.state[key];
+        if(partyAnchor)target=crackerSpot(state,partyAnchor);beginShow(false);
+      },
+      audioSettings:()=>({enabled:soundEnabled&&audioFocused&&!document.hidden&&!FaceAvatar.isOpen&&!Onboarding.active,volume:soundVolume,context:audioCtx}),
       audioPlan(selection){
         if(selection.kind==='skyshot')return Array.from({length:selection.skyshotCount},(_,i)=>({src:skyshotRecording.src,start:1.15+i*.95-skyshotRecording.launchAt,base:0,end:skyshotRecording.duration}));
         const kind=selection.kind,recording=recordings[kind];if(!recording)return [];
@@ -1944,8 +2037,8 @@
         }
         return [{src:recording.src,start:0,base:recordingBase(kind),end,playbackRate:recording.playbackRate||1}];
       },
-      join(player){partyCamera=0;target={...player.target};reset(false);state.player={...player.state.player};clearMovement();unlockAudio();},
-      leave(){partyCamera=0;target={x:500,y:292};reset(false);},
+      join(player){partyCamera=0;partyAnchor={...player.target};target=crackerSpot(state,partyAnchor);reset(false);state.player={...player.state.player};clearMovement();unlockAudio();},
+      leave(){partyCamera=0;partyAnchor=null;target={x:500,y:292};reset(false);},
       clearKeys:clearMovement,
       createActor(player){return {...player,state:{...state,...player.state,phase:player.state.phase==='show'?'idle':player.state.phase,player:{...player.state.player},now:0,emission:0,smokeEmission:0,spin:0,flash:0},
         destination:{...player.state.player},particles:[],skyshots:[],fuljhadiTrace:[],smoke:[],shockwaves:[],moving:false};},
@@ -1980,7 +2073,7 @@
         state.player.x+=(actor.destination.x-state.player.x)*blend;state.player.y+=(actor.destination.y-state.player.y)*blend;
         const steps=Math.max(1,Math.ceil(dt*120));for(let i=0;i<steps;i++)update(dt/steps);
       });},
-      drawActor(actor){withPartyActor(actor,()=>{drawPlayer();if(state.kind==='fuljhadi')drawFuljhadi();});},
+      drawActor(actor){withPartyActor(actor,()=>{drawPlayer();if(state.kind==='fuljhadi'&&!guestLighting)drawFuljhadi();});},
       drawProp(actor){withPartyActor(actor,drawFirecracker);},
       drawEffects(actor){withPartyActor(actor,()=>{
         drawShowLight();if(state.kind==='fuljhadi')drawFuljhadiTrace();drawSmoke();
@@ -1988,9 +2081,10 @@
       });}
     });
     function stepFrame(ts,paint=true){
-      if(FaceAvatar.isOpen){
+      if(FaceAvatar.isOpen||Onboarding.active){
         const elapsed=last?Math.min((ts-last)/1000,2):1/60;last=ts;
         if(Party.active){advance(elapsed);Party.tick(elapsed);}
+        if(Onboarding.active&&!FaceAvatar.isOpen&&paint)render();
         return;
       }
       const dt=last?Math.min((ts-last)/1000,Party.active?2:.1):1/60;last=ts;
@@ -2011,7 +2105,12 @@
       if(document.hidden){clearMovement();stopAllAudio();}
       else if(soundEnabled&&audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
     });
-    reset(true);requestAnimationFrame(loop);
+    reset(true);render();requestAnimationFrame(loop);
+    Onboarding.start({
+      clearMovement,stopAudio:stopAllAudio,enterPhone:enterPhonePlay,options:setPhoneOptions,
+      phone:()=>({active:phonePlay,optionsOpen:phoneOptionsOpen}),player:()=>({...state.player}),
+      resume(){clearMovement();last=0;updateUI();syncAudio();render();}
+    });
   })();
   </script>
 </body>

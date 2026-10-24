@@ -14,9 +14,16 @@ const limit=8;
 const fail=(message,status=400)=>Object.assign(new Error(message),{status});
 const finite=(value,min,max)=>typeof value==='number'&&Number.isFinite(value)?Math.max(min,Math.min(max,value)):min;
 const pick=(value,options,fallback)=>options.includes(value)?value:fallback;
+const outfitColor=(value,fallback)=>typeof value==='string'&&/^#[a-f\d]{6}$/i.test(value)?value.toLowerCase():fallback;
+function crackerSpot(state,anchor){
+  if(state.kind!=='mirchi')return {...anchor};
+  const count=state.mirchiCount||10,start=(count===10?-48:-count*3)*.8,end=(count===10?46.5:count*3)*.8;
+  return {x:Math.max(74-start,Math.min(1000-74-end,anchor.x)),y:anchor.y};
+}
 function cleanState(input={}){
   return {player:{x:finite(input.player?.x,65,935),y:finite(input.player?.y,310,565)},
     character:pick(input.character,['male','female'],'male'),kind:pick(input.kind,kinds,'skyshot'),
+    kurtaColor:outfitColor(input.kurtaColor,'#74c8bf'),ghagraColor:outfitColor(input.ghagraColor,'#b65baf'),
     phase:pick(input.phase,phases,'idle'),skyshotCount:pick(input.skyshotCount,[1,6,12],1),
     mirchiCount:pick(input.mirchiCount,[10,50,100],10),singleColor:pick(input.singleColor,colors,'golden'),
     fuljhadiColor:pick(input.fuljhadiColor,colors,'golden'),facingBack:input.facingBack===true,
@@ -42,7 +49,14 @@ async function jsonBody(req){
 }
 export function createPartyServer(){
   const rooms=new Map(),sessions=new Map(),buckets=new Map();
-  const publicPlayer=p=>({id:p.id,name:p.name,slot:p.slot,target:p.target,state:p.state,face:p.face});
+  const rounds=new Map();
+  const publicState=p=>({...p.state,crackerReserved:p.sharedIgnition?.stage==='lighting',serverIgnition:!!p.sharedIgnition});
+  const publicPlayer=p=>({id:p.id,name:p.name,slot:p.slot,target:p.target,state:publicState(p),face:p.face});
+  function clearIgnition(player){
+    const round=player.sharedIgnition;if(!round)return;
+    clearTimeout(round.contactTimer);clearTimeout(round.showTimer);clearTimeout(round.cleanupTimer);
+    rounds.delete(player.id);player.sharedIgnition=null;
+  }
   function send(player,event,data){
     const stream=player.stream;
     if(!stream||stream.destroyed)return;
@@ -51,6 +65,7 @@ export function createPartyServer(){
   }
   const broadcast=(room,event,data)=>{for(const player of room.players.values())send(player,event,data);};
   function remove(player){
+    clearIgnition(player);
     const room=player.room;sessions.delete(player.token);room.players.delete(player.id);player.stream?.end();
     room.effects=room.effects.filter(effect=>effect.playerId!==player.id);
     if(!room.players.size){rooms.delete(room.code);return;}
@@ -102,7 +117,8 @@ export function createPartyServer(){
           res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-cache, no-transform','Connection':'keep-alive','X-Accel-Buffering':'no'});
           res.write('retry: 1500\n\n');
           room.effects=room.effects.filter(effect=>now-effect.at<30000);
-          send(player,'room',{code:room.code,selfId:player.id,hostId:room.hostId,now,players:[...room.players.values()].map(publicPlayer),effects:room.effects});
+          send(player,'room',{code:room.code,selfId:player.id,hostId:room.hostId,now,players:[...room.players.values()].map(publicPlayer),effects:room.effects,
+            ignitions:[...room.players.values()].filter(p=>p.sharedIgnition?.stage==='lighting').map(p=>p.sharedIgnition.info)});
           res.on('close',()=>{if(player.stream===res){player.stream=null;player.seen=Date.now();}});return;
         }
         if(req.method!=='POST')throw fail('Use POST.',405);
@@ -111,17 +127,53 @@ export function createPartyServer(){
           if(Number.isSafeInteger(body.sequence)&&body.sequence<=player.lastSequence){respond(200,{ok:true});return;}
           if(now-player.lastUpdate<60){respond(200,{ok:true});return;}
           if(Number.isSafeInteger(body.sequence))player.lastSequence=body.sequence;
-          player.lastUpdate=now;player.state=cleanState(body.state);
-          broadcast(room,'move',{id:player.id,state:player.state,at:now});
+          player.lastUpdate=now;const next=cleanState(body.state),round=player.sharedIgnition;
+          if(round){
+            for(const key of ['kind','mirchiCount','skyshotCount','singleColor','fuljhadiColor'])next[key]=round.info.state[key];
+            if(round.stage==='lighting'){next.phase='idle';next.clock=0;}
+            else if(round.stage==='fuse'){next.phase='fuse';next.fuse=Math.max(0,(round.showAt-now)/1000);}
+            else if(next.phase==='show')clearIgnition(player);
+            else {next.phase='show';next.clock=Math.max(0,(now-round.showAt)/1000)*(next.kind==='double'?.85:1);}
+          }
+          player.state=next;
+          broadcast(room,'move',{id:player.id,state:publicState(player),at:now});
+        }else if(url.pathname==='/api/party/ignite'){
+          const owner=room.players.get(body.ownerId);
+          if(!owner||owner.id===player.id)throw fail('Choose another player’s cracker in this room.',404);
+          if(owner.state.kind==='fuljhadi')throw fail('Fuljhadi stays in its owner’s hand.',400);
+          if(owner.state.phase!=='idle'||owner.sharedIgnition)throw fail('Someone is already lighting that cracker.',409);
+          if(!['idle','fuse','show'].includes(player.state.phase)||player.sharedIgnition||player.lightingUntil>now)throw fail('Finish your current action first.',409);
+          const lighter=cleanState(body.state||player.state),spot=crackerSpot(owner.state,owner.target);
+          const start=owner.state.kind==='mirchi'?(owner.state.mirchiCount===10?-48:-owner.state.mirchiCount*3)*.8:0;
+          if(Math.hypot(lighter.player.x-spot.x-start,lighter.player.y-spot.y)>112)throw fail('Walk closer to that cracker’s fuse.',400);
+          player.state=lighter;player.lightingUntil=now+1550;
+          const duration=owner.state.kind==='lantern'?0:['aloo','mirchi'].includes(owner.state.kind)?4:4.3;
+          const info={id:randomBytes(8).toString('hex'),ownerId:owner.id,igniterId:player.id,at:now,state:{...owner.state},target:spot};
+          const round={info,stage:'lighting',showAt:now+1550+duration*1000};owner.sharedIgnition=round;rounds.set(owner.id,owner);
+          broadcast(room,'ignite',info);
+          round.contactTimer=setTimeout(()=>{
+            if(owner.sharedIgnition!==round)return;
+            round.stage='fuse';owner.state={...owner.state,phase:'fuse',clock:0,fuse:duration};
+            broadcast(room,'fuse',{ownerId:owner.id,id:info.id,at:Date.now(),state:publicState(owner),target:spot});
+          },1550);round.contactTimer.unref();
+          round.showTimer=setTimeout(()=>{
+            if(owner.sharedIgnition!==round)return;
+            round.stage='show';owner.state={...owner.state,phase:'show',clock:0,fuse:0};
+            const effect={id:info.id,playerId:owner.id,shared:true,igniterId:player.id,at:Date.now(),state:publicState(owner),target:spot};
+            room.effects=room.effects.filter(e=>Date.now()-e.at<30000);room.effects.push(effect);broadcast(room,'show',effect);
+            round.cleanupTimer=setTimeout(()=>clearIgnition(owner),30000);round.cleanupTimer.unref();
+          },1550+duration*1000);round.showTimer.unref();
+          respond(200,{ok:true,ignition:info});return;
         }else if(url.pathname==='/api/party/profile'){
           if(now-player.lastProfile<500)throw fail('Please wait a moment before changing your face again.',429);
           player.face=cleanFace(body.face);player.lastProfile=now;
           broadcast(room,'profile',{id:player.id,face:player.face});
         }else if(url.pathname==='/api/party/show'){
+          if(player.sharedIgnition)throw fail('That cracker’s shared ignition is already running.',409);
           if(now-player.lastShow<1500)throw fail('Your previous firecracker is still starting.',429);
           player.lastShow=now;const state=cleanState(body.state);
           if(!Number.isSafeInteger(body.sequence)||body.sequence>=player.lastSequence){player.state=state;player.lastSequence=body.sequence||player.lastSequence;}
-          const effect={id:randomBytes(8).toString('hex'),playerId:player.id,at:now,state,target:player.target};
+          const effect={id:randomBytes(8).toString('hex'),playerId:player.id,at:now,state,target:crackerSpot(state,player.target)};
           room.effects=room.effects.filter(e=>now-e.at<30000);room.effects.push(effect);
           broadcast(room,'show',effect);
         }else if(url.pathname==='/api/party/leave'){remove(player);}
@@ -130,11 +182,11 @@ export function createPartyServer(){
       }
       if(!['GET','HEAD'].includes(req.method))throw fail('Method not allowed.',405);
       const name=decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname);
-      if(!/^\/(?:index\.html|face-avatar\.js|cracker-audio\.js|party\.js|party\.css|sounds\/[\w.-]+|vendor\/mediapipe\/[\w./-]+)$/.test(name)||name.split('/').some(part=>part.startsWith('.')))throw fail('Not found.',404);
+      if(!/^\/(?:index\.html|face-avatar\.js|cracker-audio\.js|party\.js|party\.css|onboarding\.js|onboarding\.css|sounds\/[\w.-]+|vendor\/mediapipe\/[\w./-]+)$/.test(name)||name.split('/').some(part=>part.startsWith('.')))throw fail('Not found.',404);
       const file=path.resolve(root,'.'+name);
       if(!file.startsWith(root))throw fail('Not found.',404);
       const info=await stat(file);if(!info.isFile())throw fail('Not found.',404);
-      const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.mp3':'audio/mpeg','.wasm':'application/wasm','.tflite':'application/octet-stream'};
+      const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.mp3':'audio/mpeg','.wav':'audio/wav','.wasm':'application/wasm','.tflite':'application/octet-stream'};
       let start=0,end=info.size-1,status=200;
       if(req.headers.range){
         const match=/^bytes=(\d+)-(\d*)$/.exec(req.headers.range);
@@ -157,8 +209,8 @@ export function createPartyServer(){
     }
     for(const [ip,bucket] of buckets)if(now-bucket.at>60000)buckets.delete(ip);
   },10000);cleanup.unref();
-  server.on('close',()=>clearInterval(cleanup));
-  server.closeParties=()=>{for(const player of sessions.values())player.stream?.end();};
+  server.on('close',()=>{clearInterval(cleanup);for(const player of rounds.values())clearIgnition(player);});
+  server.closeParties=()=>{for(const player of rounds.values())clearIgnition(player);for(const player of sessions.values())player.stream?.end();};
   return server;
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
