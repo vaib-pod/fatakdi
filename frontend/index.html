@@ -145,6 +145,8 @@
     .restart { width:100%; border-radius:11px; border:1px solid #5a6586; background:transparent; color:#cbd5ed; padding:10px; font-size:12px; font-weight:750; }
     .restart:hover { background:#242d4b; }
     .made { margin-top:19px; color:#6f7998; font-size:11px; text-align:center; }
+    .made a { color:#c5cbe0; text-decoration:underline; text-decoration-color:#c5cbe080; text-underline-offset:3px; }
+    .made a:hover,.made a:focus-visible { color:#ffd294; }
     @media (max-width:1000px) { .layout { grid-template-columns:minmax(0,1fr) 245px; } .panel { padding:15px; } }
     @media (max-width:760px) { .wrap { padding:15px 12px 34px; } .layout { grid-template-columns:1fr; gap:13px; } .sidebar { display:grid; grid-template-columns:1fr 1fr; align-items:start; } .sidebar .panel:first-child { grid-row:span 2; } .stage { aspect-ratio:1000/680; } .touch-pad { display:grid; } .stage-footer kbd { display:none; } .stage-footer .desktop-help { display:none; } }
     @media (max-width:490px) { .sidebar { grid-template-columns:1fr; } .sidebar .panel:first-child { grid-row:auto; } .pick-list { grid-template-columns:1fr 1fr; } .pick { gap:6px; padding:9px 7px; } .pick-icon { width:28px;height:28px; font-size:18px;flex-shrink:0; } .pick-text strong { font-size:11px; } .pick-text small { font-size:9px; } .stage { aspect-ratio:1000/770; } .glass { padding:7px 9px; } .distance { display:none; } .warning { top:6px; left:auto; right:6px; width:45%; transform:translateY(-10px); padding:8px; } .warning.show { transform:translateY(0); } .warning strong { font-size:11px; } .warning .sub { font-size:9px; } .action-zone { bottom:17px; left:auto;right:10px;transform:none; max-width:45%; } .light-button { padding:12px 15px; font-size:12px; } .stage-toast { font-size:9px; } .stage-footer { font-size:10px; } .touch-pad { left:8px;bottom:8px; grid-template-columns:repeat(3,31px);grid-template-rows:repeat(2,31px);gap:3px; } .touch-pad .pad { font-size:13px; } }
@@ -388,7 +390,7 @@
         <button class="restart" id="restart" type="button">↻ Restart game</button>
       </aside>
     </div>
-    <div class="made">Built for the joy of a virtual Diwali night ✧</div>
+    <div class="made">Made with love by <a href="https://vaib-pod.vercel.app/" target="_blank" rel="noopener noreferrer">Vaibhav Poddar</a></div>
   </div>
   <div class="onboarding" id="onboarding" hidden>
     <div class="tour-shield"></div><div class="tour-shield"></div><div class="tour-shield"></div><div class="tour-shield"></div>
