@@ -110,7 +110,7 @@ In `frontend/index.html`:
 
 The frontend assets live in `frontend/`; `server.mjs`, `package.json`, and `tests/` stay at the repository root. Keep the supplied `sounds/` and `vendor/mediapipe/` contents inside `frontend/` when deploying.
 
-For Vercel, import this repository and set the project **Root Directory** to `frontend`. It is a static site with no build command. In `frontend/party-config.js`, set `window.PARTY_API_BASE` to the public HTTPS origin of your Render web service, with no trailing slash, for example `https://your-service.onrender.com`.
+For Vercel, import this repository and set the project **Root Directory** to `frontend`. It is a static site with no build command. In `frontend/party-config.js`, set `window.PARTY_API_BASE` to the public HTTPS origin of your Render web service, with no trailing slash. The current configured service is `https://fatakdi.onrender.com`.
 
 For Render, create a Node web service from this repository root, use `npm start` as the start command, and leave the port to Render's `PORT` environment variable. Set `ALLOWED_ORIGINS` to a comma-separated list of the exact Vercel site origins that should connect, such as `https://your-project.vercel.app,https://www.example.com`. Do not include paths or trailing slashes. Add each production custom domain you use. Local same-origin development continues to work without this variable.
 
