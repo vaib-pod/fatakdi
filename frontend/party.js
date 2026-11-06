@@ -1,5 +1,7 @@
 (() => {
   'use strict';
+  const API_BASE=(window.PARTY_API_BASE||window.location.origin).replace(/\/+$/,'');
+  const partyUrl=path=>`${API_BASE}/api/party/${path}`;
   const $=id=>document.getElementById(id),players=new Map(),seenEffects=new Map(),seenIgnitions=new Map(),sounds=new Map();
   let bridge,session=null,source=null,connected=false,busy=false,sending=false,lastSend=0,offset=0,profileTimer;
   let connectionGeneration=0,lastFace=null,sequence=0;
@@ -8,7 +10,7 @@
   async function request(action,body={},token=session?.token){
     if(action==='update'||action==='show')body={...body,sequence:++sequence};
     let response;
-    try{response=await fetch('/api/party/'+action,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(body),signal:AbortSignal.timeout(10000),cache:'no-store'});}
+    try{response=await fetch(partyUrl(action),{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(body),signal:AbortSignal.timeout(10000),cache:'no-store'});}
     catch{throw new Error('Cannot reach the party server. Start it with npm start, or check your connection.');}
     let data;try{data=await response.json();}catch{throw new Error('Parties need the multiplayer server. Run npm start and open http://localhost:3000.');}
     if(!response.ok){const error=new Error(data.error||'The party request failed.');error.status=response.status;throw error;}
@@ -59,7 +61,7 @@
     if(info.igniterId===session.id)bridge.lightAnother(info,age);else if(igniter)bridge.lightActor(igniter,info,age);
   }
   function listen(generation){
-    source=new EventSource('/api/party/events?session='+encodeURIComponent(session.token));
+    source=new EventSource(`${partyUrl('events')}?session=${encodeURIComponent(session.token)}`);
     const handle=(name,fn)=>source.addEventListener(name,event=>{
       if(generation!==connectionGeneration||!session)return;
       try{fn(JSON.parse(event.data));}catch(error){console.error('Party event:',error);}
@@ -224,7 +226,7 @@
   $('party-share-face').addEventListener('change',queueFace);
   window.addEventListener('avatar:change',queueFace);
   window.addEventListener('pagehide',()=>{
-    if(session)fetch('/api/party/leave',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.token},body:'{}',keepalive:true}).catch(()=>{});
+    if(session)fetch(partyUrl('leave'),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.token},body:'{}',keepalive:true}).catch(()=>{});
     source?.close();stopSounds();
   });
   $('party-code').addEventListener('input',()=>{$('party-code').value=$('party-code').value.toUpperCase().replace(/[^A-Z2-9]/g,'');});

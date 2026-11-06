@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const root=fileURLToPath(new URL('.',import.meta.url));
+const staticRoot=path.join(root,'frontend');
 const kinds=['skyshot','double','rocket','fuljhadi','fountain','peacock','kitkat','chakri','lantern','mirchi','aloo'];
 const colors=['golden','red','green','blue','orange','purple'];
 const phases=['idle','lighting','fuse','show','fail'];
@@ -49,6 +50,7 @@ async function jsonBody(req){
 }
 export function createPartyServer(){
   const rooms=new Map(),sessions=new Map(),buckets=new Map();
+  const allowedOrigins=new Set((process.env.ALLOWED_ORIGINS||'').split(',').map(origin=>origin.trim()).filter(Boolean));
   const rounds=new Map();
   const publicState=p=>({...p.state,crackerReserved:p.sharedIgnition?.stage==='lighting',serverIgnition:!!p.sharedIgnition});
   const publicPlayer=p=>({id:p.id,name:p.name,slot:p.slot,target:p.target,state:publicState(p),face:p.face});
@@ -78,8 +80,17 @@ export function createPartyServer(){
       const url=new URL(req.url,'http://local');
       res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');
       if(url.pathname.startsWith('/api/')){
-        // Same-origin JSON requests prevent other sites from acting on a session.
-        if(req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host)throw fail('Use the game’s own address.',403);
+        const origin=req.headers.origin;
+        if(origin){
+          let sameOrigin=false;
+          try{sameOrigin=new URL(origin).host===req.headers.host;}catch{}
+          if(!allowedOrigins.has(origin)&&!sameOrigin)throw fail('Origin not allowed.',403);
+          res.setHeader('Access-Control-Allow-Origin',origin);
+          res.setHeader('Vary','Origin');
+          res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers','Content-Type, Authorization');
+        }
+        if(req.method==='OPTIONS'){res.writeHead(204);res.end();return;}
         if(url.pathname==='/api/party/health'&&req.method==='GET'){respond(200,{ok:true,maxPlayers:limit});return;}
         const now=Date.now();
         if(url.pathname==='/api/party/host'||url.pathname==='/api/party/join'){
@@ -182,9 +193,9 @@ export function createPartyServer(){
       }
       if(!['GET','HEAD'].includes(req.method))throw fail('Method not allowed.',405);
       const name=decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname);
-      if(!/^\/(?:index\.html|face-avatar\.js|cracker-audio\.js|party\.js|party\.css|onboarding\.js|onboarding\.css|sounds\/[\w.-]+|vendor\/mediapipe\/[\w./-]+)$/.test(name)||name.split('/').some(part=>part.startsWith('.')))throw fail('Not found.',404);
-      const file=path.resolve(root,'.'+name);
-      if(!file.startsWith(root))throw fail('Not found.',404);
+      if(!/^\/(?:index\.html|face-avatar\.js|cracker-audio\.js|party-config\.js|party\.js|party\.css|onboarding\.js|onboarding\.css|sounds\/[\w.-]+|vendor\/mediapipe\/[\w./-]+)$/.test(name)||name.split('/').some(part=>part.startsWith('.')))throw fail('Not found.',404);
+      const file=path.resolve(staticRoot,'.'+name);
+      if(!file.startsWith(staticRoot))throw fail('Not found.',404);
       const info=await stat(file);if(!info.isFile())throw fail('Not found.',404);
       const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.mp3':'audio/mpeg','.wav':'audio/wav','.wasm':'application/wasm','.tflite':'application/octet-stream'};
       let start=0,end=info.size-1,status=200;
